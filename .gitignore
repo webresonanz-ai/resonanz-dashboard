@@ -38,5 +38,6 @@ __screenshots__/
 # Vite
 *.timestamp-*-*.mjs
 
+/backend/public/uploads
 .vscode
 .env
