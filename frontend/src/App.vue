@@ -1,7 +1,15 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { computed } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import FooterBar from './components/FooterBar.vue'
+
+const route = useRoute()
+
+// Auth pages get a bare layout (no nav/footer)
+const isAuthRoute = computed(() =>
+  ['login', 'register'].includes(route.name)
+)
 </script>
 
 <template>
@@ -9,7 +17,6 @@ import FooterBar from './components/FooterBar.vue'
 
     <!-- ─── Ambient aurora background ─── -->
     <div class="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-      <!-- Main aurora blob top-right -->
       <div
         class="absolute -top-40 -right-40 w-[700px] h-[700px] rounded-full opacity-60"
         style="
@@ -17,8 +24,6 @@ import FooterBar from './components/FooterBar.vue'
           animation: aurora 20s ease-in-out infinite;
         "
       ></div>
-
-      <!-- Secondary aurora blob bottom-left -->
       <div
         class="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full opacity-50"
         style="
@@ -26,8 +31,6 @@ import FooterBar from './components/FooterBar.vue'
           animation: aurora 26s ease-in-out 8s infinite reverse;
         "
       ></div>
-
-      <!-- Subtle center glow -->
       <div
         class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full opacity-20"
         style="
@@ -35,8 +38,6 @@ import FooterBar from './components/FooterBar.vue'
           animation: aurora 35s linear infinite;
         "
       ></div>
-
-      <!-- Fine grid overlay for depth -->
       <div
         class="absolute inset-0 opacity-[0.025]"
         style="
@@ -48,7 +49,8 @@ import FooterBar from './components/FooterBar.vue'
       ></div>
     </div>
 
-    <NavBar />
+    <!-- Nav hidden on auth pages -->
+    <NavBar v-if="!isAuthRoute" />
 
     <main class="flex-1 relative z-10">
       <RouterView v-slot="{ Component }">
@@ -58,12 +60,12 @@ import FooterBar from './components/FooterBar.vue'
       </RouterView>
     </main>
 
-    <FooterBar />
+    <!-- Footer hidden on auth pages -->
+    <FooterBar v-if="!isAuthRoute" />
   </div>
 </template>
 
 <style>
-/* ─── Page transition ─── */
 .page-enter-active {
   transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
               transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
