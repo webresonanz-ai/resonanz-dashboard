@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted } from 'vue'
-import { Calendar, MapPin, Ticket, Clock, ArrowRight, AlertCircle, RefreshCw } from 'lucide-vue-next'
+import { Calendar, MapPin, Ticket, Clock, ArrowRight, AlertCircle, RefreshCw, ExternalLink } from 'lucide-vue-next'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import { useApi } from '@/composables/useApi'
 
@@ -27,8 +27,26 @@ function formatTime(t) {
   return t ? t.slice(0, 5) : ''
 }
 
-function formatPrice(p) {
-  return p !== undefined && p !== null ? `$${parseFloat(p).toFixed(2).replace('.00', '')}` : ''
+function getRegistrationUrl(e) {
+  const raw = e?.registration_url ?? e?.external_url ?? ''
+  const url = String(raw).trim()
+  if (!url) return ''
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
+
+function isExternal(e) {
+  const flag = e?.use_registration_url ?? e?.use_external_url ?? 0
+  const on = flag == 1 || flag === true || flag === '1' || flag === 'true'
+  return e?.type === 'Concert' && on && !!getRegistrationUrl(e)
+}
+
+function handleBook(e) {
+  const url = getRegistrationUrl(e)
+  if (e?.type === 'Concert' && url) {
+    const flag = e?.use_registration_url ?? e?.use_external_url ?? 0
+    const on = flag == 1 || flag === true || flag === '1' || flag === 'true'
+    if (on) window.open(url, '_blank', 'noopener')
+  }
 }
 </script>
 
@@ -105,6 +123,11 @@ function formatPrice(p) {
               {{ e.tag }}
             </span>
           </div>
+          <div v-if="e.type" class="absolute top-4 left-4 z-10">
+            <span class="px-3 py-1 text-xs font-medium rounded-full bg-black/40 text-gold-300 border border-gold-500/30 backdrop-blur">
+              {{ e.type }}
+            </span>
+          </div>
           <Ticket class="w-16 h-16 text-gold-400/40 group-hover:text-gold-400/70
                          group-hover:scale-110 transition-all duration-500"
                   stroke-width="1" />
@@ -131,8 +154,18 @@ function formatPrice(p) {
             </div>
           </div>
           <div class="flex items-center justify-between pt-4 border-t border-gold-500/20">
-            <span class="text-2xl font-bold gold-text font-serif">{{ formatPrice(e.price) }}</span>
-            <button class="inline-flex items-center gap-1.5 px-4 py-2 bg-gold-gradient text-maroon-950
+            <span class="text-sm font-medium text-gold-300">{{ e.type || 'Concert' }}</span>
+            <a v-if="isExternal(e)" :href="getRegistrationUrl(e)" target="_blank" rel="noopener"
+               class="inline-flex items-center gap-1.5 px-4 py-2 bg-gold-gradient text-maroon-950
+                      font-semibold text-sm rounded-lg btn-magnetic relative overflow-hidden group/btn">
+              <span class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full
+                           bg-gradient-to-r from-transparent via-white/25 to-transparent
+                           transition-transform duration-500"></span>
+              <span class="relative">Book Now</span>
+              <ExternalLink class="w-3.5 h-3.5 relative" />
+            </a>
+            <button v-else @click="handleBook(e)"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-gold-gradient text-maroon-950
                            font-semibold text-sm rounded-lg btn-magnetic relative overflow-hidden group/btn">
               <span class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full
                            bg-gradient-to-r from-transparent via-white/25 to-transparent

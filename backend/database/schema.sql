@@ -52,7 +52,9 @@ CREATE TABLE IF NOT EXISTS `events` (
     `event_date` DATE         NOT NULL,
     `event_time` TIME         NOT NULL,
     `venue`      VARCHAR(200) NOT NULL,
-    `price`      DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    `type`       ENUM('Concert','Workshop','Masterclass') NOT NULL DEFAULT 'Concert',
+    `use_registration_url` TINYINT(1) NOT NULL DEFAULT 0,
+    `registration_url`     VARCHAR(500) NULL,
     `tag`        VARCHAR(50)  NULL,
     `is_active`  TINYINT(1)   NOT NULL DEFAULT 1,
     `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -169,13 +171,13 @@ INSERT IGNORE INTO `schedule` (`id`,`day`,`time_start`,`time_end`,`course`,`room
 (6,'Saturday','08:00:00','16:00:00','Youth Orchestra','Main Hall','Ms. Sophia Chen',6);
 
 -- Events (renamed from concerts)
-INSERT IGNORE INTO `events` (`id`,`title`,`event_date`,`event_time`,`venue`,`price`,`tag`) VALUES
-(1,'Winter Symphony Gala','2025-12-15','19:30:00','Grand Concert Hall',45.00,'Featured'),
-(2,'Young Virtuosos Showcase','2025-12-22','18:00:00','Resonanz Main Hall',25.00,'Student'),
-(3,'New Year Classical Night','2026-01-01','20:00:00','City Philharmonic',60.00,'Special'),
-(4,'Chamber Music Evening','2026-01-18','19:00:00','Studio A',35.00,NULL),
-(5,'Spring Piano Recital','2026-02-10','19:30:00','Grand Concert Hall',40.00,NULL),
-(6,'Youth Orchestra Premiere','2026-03-05','18:30:00','Resonanz Main Hall',30.00,'New');
+INSERT IGNORE INTO `events` (`id`,`title`,`event_date`,`event_time`,`venue`,`type`,`use_registration_url`,`registration_url`,`tag`) VALUES
+(1,'Winter Symphony Gala','2025-12-15','19:30:00','Grand Concert Hall','Concert',0,NULL,'Featured'),
+(2,'Young Virtuosos Showcase','2025-12-22','18:00:00','Resonanz Main Hall','Concert',0,NULL,'Student'),
+(3,'New Year Classical Night','2026-01-01','20:00:00','City Philharmonic','Concert',0,NULL,'Special'),
+(4,'Chamber Music Evening','2026-01-18','19:00:00','Studio A','Workshop',0,NULL,NULL),
+(5,'Spring Piano Recital','2026-02-10','19:30:00','Grand Concert Hall','Masterclass',0,NULL,NULL),
+(6,'Youth Orchestra Premiere','2026-03-05','18:30:00','Resonanz Main Hall','Concert',0,NULL,'New');
 
 -- News
 INSERT IGNORE INTO `news` (`id`,`title`,`category`,`excerpt`,`is_published`,`published_at`) VALUES

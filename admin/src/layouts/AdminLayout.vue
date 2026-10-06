@@ -118,9 +118,11 @@ async function handleLogout() {
 
       <!-- Page content -->
       <main class="flex-1 overflow-y-auto p-6">
-        <transition name="slide-up" mode="out-in">
-          <RouterView :key="route.path" />
-        </transition>
+        <RouterView v-slot="{ Component }">
+          <transition name="slide-up" mode="out-in">
+            <component :is="Component" :key="route.path" />
+          </transition>
+        </RouterView>
       </main>
     </div>
 
