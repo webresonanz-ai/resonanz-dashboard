@@ -1,0 +1,327 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+@config "../../tailwind.config.js";
+
+@layer base {
+  body {
+    @apply bg-maroon-950 text-gray-100 font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  .gold-text {
+    background: linear-gradient(135deg, #ffd843 0%, #ffc520 50%, #e8a400 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gold-border {
+    border-image: linear-gradient(135deg, #ffd843, #e8a400) 1;
+  }
+
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-lg border border-gold-500/20 rounded-2xl;
+  }
+
+  /* ─── Shimmer effect for gold text on hover ─── */
+  .gold-shimmer {
+    background: linear-gradient(
+      90deg,
+      #e8a400 0%,
+      #ffd843 25%,
+      #fff8d6 50%,
+      #ffd843 75%,
+      #e8a400 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
+  }
+
+  /* ─── Glow pulse for featured elements ─── */
+  .glow-pulse {
+    animation: glow-pulse 2.5s ease-in-out infinite;
+  }
+
+  /* ─── Floating animation ─── */
+  .float {
+    animation: float 6s ease-in-out infinite;
+  }
+  .float-slow {
+    animation: float 9s ease-in-out infinite;
+  }
+  .float-delay {
+    animation: float 6s ease-in-out 3s infinite;
+  }
+
+  /* ─── Scroll-reveal base state ─── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-left.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .reveal-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-right.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .reveal-scale {
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-scale.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* ─── Stagger delay helpers ─── */
+  .delay-100 { transition-delay: 0.1s; }
+  .delay-200 { transition-delay: 0.2s; }
+  .delay-300 { transition-delay: 0.3s; }
+  .delay-400 { transition-delay: 0.4s; }
+  .delay-500 { transition-delay: 0.5s; }
+  .delay-600 { transition-delay: 0.6s; }
+  .delay-700 { transition-delay: 0.7s; }
+
+  /* ─── Magnetic button ─── */
+  .btn-magnetic {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.3s ease;
+  }
+  .btn-magnetic:hover {
+    transform: translateY(-2px) scale(1.04);
+  }
+  .btn-magnetic:active {
+    transform: translateY(1px) scale(0.98);
+  }
+
+  /* ─── Card lift on hover ─── */
+  .card-lift {
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.3s ease,
+                box-shadow 0.35s ease;
+  }
+  .card-lift:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 197, 32, 0.12);
+  }
+
+  /* ─── Gradient border animated ─── */
+  .animated-border {
+    position: relative;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+  .animated-border::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255,197,32,0.5), rgba(122,30,61,0.2), rgba(255,197,32,0.5));
+    background-size: 300% 300%;
+    animation: gradient-border 4s ease infinite;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .animated-border:hover::before {
+    opacity: 1;
+  }
+
+  /* ─── Particle dot ─── */
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,197,32,0.6) 0%, transparent 70%);
+    animation: particle-float 8s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* ─── Count-up number animation ─── */
+  .stat-number {
+    display: inline-block;
+    animation: pop-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* ─── Typewriter cursor blink ─── */
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  .cursor-blink::after {
+    content: '|';
+    color: #ffc520;
+    animation: blink 1s step-end infinite;
+    margin-left: 2px;
+  }
+
+  /* ─── Line draw for decorative dividers ─── */
+  .line-draw {
+    width: 0;
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .line-draw.visible {
+    width: 100%;
+  }
+
+  /* ─── Tilt card (3D) ─── */
+  .tilt-card {
+    transition: transform 0.15s ease;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+}
+
+/* ─── Keyframes ─── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 197, 32, 0.3); }
+  50%       { box-shadow: 0 0 50px rgba(255, 197, 32, 0.7), 0 0 80px rgba(255, 197, 32, 0.3); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-14px); }
+}
+
+@keyframes gradient-border {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes particle-float {
+  0%   { transform: translate(0, 0) scale(1); opacity: 0; }
+  20%  { opacity: 0.6; }
+  80%  { opacity: 0.4; }
+  100% { transform: translate(var(--tx, 40px), var(--ty, -80px)) scale(0.5); opacity: 0; }
+}
+
+@keyframes pop-in {
+  0%   { transform: scale(0.8); opacity: 0; }
+  80%  { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-right {
+  from { width: 0; }
+  to   { width: 3rem; }
+}
+
+@keyframes ripple {
+  0%   { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+@keyframes aurora {
+  0%   { transform: translate(0%, 0%) rotate(0deg); }
+  33%  { transform: translate(3%, 2%) rotate(120deg); }
+  66%  { transform: translate(-2%, 4%) rotate(240deg); }
+  100% { transform: translate(0%, 0%) rotate(360deg); }
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #430a1d;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #ffd843, #e8a400);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #fff5b8, #ffd843);
+}
+
+/* ─── Selection color ─── */
+::selection {
+  background: rgba(255, 197, 32, 0.25);
+  color: #ffd843;
+}
+
+/* ─── Focus ring ─── */
+:focus-visible {
+  outline: 2px solid rgba(255, 197, 32, 0.6);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ─── Smooth transitions for interactive elements ─── */
+a, button {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-duration: 250ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ─── Perspective for 3D effects ─── */
+.perspective {
+  perspective: 1000px;
+}
+
+/* ─── Reduced motion support ─── */
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-left, .reveal-right, .reveal-scale {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .float, .float-slow, .float-delay {
+    animation: none;
+  }
+  .shimmer, .glow-pulse, .particle {
+    animation: none;
+  }
+  a, button {
+    transition: color 150ms ease, background-color 150ms ease;
+  }
+}
