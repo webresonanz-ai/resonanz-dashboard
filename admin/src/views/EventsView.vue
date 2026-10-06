@@ -1,23 +1,39 @@
 <script setup>
 import { onMounted, ref, reactive } from 'vue'
 import { useCrud } from '@/composables/useCrud'
+import { useAuthStore } from '@/stores/authStore'
 import PageHeader from '@/components/PageHeader.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { Plus, Pencil, Trash2, X, Loader2, ExternalLink } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, X, Loader2, ExternalLink, ImagePlus, Link2, Upload } from 'lucide-vue-next'
 
+const auth = useAuthStore()
+const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const { items, loading, saving, deleting, fetchAll, create, update, remove } = useCrud('/api/admin/events')
 onMounted(fetchAll)
 
 const EVENT_TYPES = ['Concert', 'Workshop', 'Masterclass']
 
 const modal = ref(false); const isEdit = ref(false); const confirmId = ref(null)
-const form  = reactive({ id:null, title:'', event_date:'', event_time:'19:00', venue:'', type:'Concert', use_registration_url:0, registration_url:'', tag:'', is_active:1 })
+const uploading = ref(false)
+const coverMode = ref('upload') // 'upload' | 'url'
+const coverFile = ref(null)
+const coverPreview = ref('')
+const coverFileInput = ref(null)
+const form  = reactive({ id:null, title:'', event_date:'', event_time:'19:00', venue:'', type:'Concert', use_registration_url:0, registration_url:'', cover_image:'', tag:'', is_active:1 })
+
+function resolveCover(path) {
+  if (!path) return ''
+  const s = String(path).trim()
+  if (!s) return ''
+  return /^https?:\/\//i.test(s) ? s : `${API}${s.startsWith('/') ? s : `/${s}`}`
+}
 
 function emptyForm() {
-  return { id:null, title:'', event_date:'', event_time:'19:00', venue:'', type:'Concert', use_registration_url:0, registration_url:'', tag:'', is_active:1 }
+  return { id:null, title:'', event_date:'', event_time:'19:00', venue:'', type:'Concert', use_registration_url:0, registration_url:'', cover_image:'', tag:'', is_active:1 }
 }
-function openCreate() { Object.assign(form, emptyForm()); isEdit.value=false; modal.value=true }
+function resetCover() { coverMode.value = 'upload'; coverFile.value = null; coverPreview.value = ''; if (coverFileInput.value) coverFileInput.value.value = '' }
+function openCreate() { Object.assign(form, emptyForm()); resetCover(); isEdit.value=false; modal.value=true }
 function openEdit(r)  {
   Object.assign(form, emptyForm(), r)
   // normalize legacy / API shapes (support old external_* aliases)
@@ -25,12 +41,41 @@ function openEdit(r)  {
   const _useUrl = form.use_registration_url ?? r.use_external_url ?? 0
   form.use_registration_url = _useUrl ? 1 : 0
   form.registration_url = form.registration_url ?? r.external_url ?? ''
+  form.cover_image = form.cover_image ?? ''
   form.is_active = form.is_active ? 1 : 0
+  // cover preview state
+  coverFile.value = null
+  if (coverFileInput.value) coverFileInput.value.value = ''
+  const c = String(form.cover_image || '').trim()
+  coverPreview.value = resolveCover(c)
+  coverMode.value = /^https?:\/\//i.test(c) ? 'url' : 'upload'
   isEdit.value=true; modal.value=true
 }
 function onTypeChange() {
   // Clear URL fields when not a Concert
   if (form.type !== 'Concert') { form.use_registration_url = 0; form.registration_url = '' }
+}
+function onCoverFile(e) {
+  const f = e.target.files?.[0]
+  if (!f) return
+  if (!f.type.startsWith('image/')) { alert('Please choose an image file.'); return }
+  if (f.size > 5 * 1024 * 1024) { alert('Image too large. Max 5 MB.'); return }
+  coverFile.value = f
+  coverMode.value = 'upload'
+  if (coverPreview.value.startsWith('blob:')) URL.revokeObjectURL(coverPreview.value)
+  coverPreview.value = URL.createObjectURL(f)
+}
+function clearCover() {
+  coverFile.value = null
+  coverPreview.value = ''
+  form.cover_image = ''
+  if (coverFileInput.value) coverFileInput.value.value = ''
+}
+async function uploadCoverFile() {
+  const fd = new FormData()
+  fd.append('image', coverFile.value)
+  const json = await auth.apiFetch('/api/admin/uploads', { method: 'POST', body: fd })
+  return json.data?.url ?? null
 }
 async function submit() {
   const { id, ...d } = form
@@ -42,11 +87,26 @@ async function submit() {
   } else {
     d.registration_url = (d.registration_url || '').trim() || null
   }
+  // cover image: upload first when a new file was picked
   try {
+    if (coverMode.value === 'upload') {
+      if (coverFile.value) {
+        uploading.value = true
+        const url = await uploadCoverFile()
+        uploading.value = false
+        if (!url) return
+        d.cover_image = url
+      } else {
+        d.cover_image = (d.cover_image || '').trim() || null
+      }
+    } else {
+      d.cover_image = (d.cover_image || '').trim() || null
+    }
     if (isEdit.value) await update(id, d); else await create(d)
     modal.value = false
   } catch {
-    // useCrud already shows a toast — keep modal open so input isn't lost
+    uploading.value = false
+    // useCrud / apiFetch already shows a toast — keep modal open so input isn't lost
   }
 }
 async function confirmDelete() { await remove(confirmId.value); confirmId.value=null }
@@ -64,9 +124,13 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
         <div v-if="loading" class="flex items-center justify-center py-16"><Loader2 class="w-6 h-6 text-gold-400 animate-spin"/></div>
         <EmptyState v-else-if="!items.length" />
         <table v-else class="data-table">
-          <thead><tr><th>Title</th><th>Date</th><th>Time</th><th>Venue</th><th>Type</th><th>Tag</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
+          <thead><tr><th>Cover</th><th>Title</th><th>Date</th><th>Time</th><th>Venue</th><th>Type</th><th>Tag</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
           <tbody>
             <tr v-for="row in items" :key="row.id">
+              <td>
+                <img v-if="row.cover_image" :src="resolveCover(row.cover_image)" alt="" class="w-16 h-10 rounded-lg object-cover border border-white/10" loading="lazy" />
+                <span v-else class="flex w-16 h-10 rounded-lg bg-white/5 border border-white/10 items-center justify-center text-gray-600"><ImagePlus class="w-4 h-4"/></span>
+              </td>
               <td class="font-medium text-white max-w-[180px] truncate">{{ row.title }}</td>
               <td>{{ row.event_date }}</td>
               <td>{{ row.event_time?.slice(0,5) }}</td>
@@ -125,6 +189,25 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
                     <p class="text-xs text-gray-500 mt-1">When enabled, “Book Now” redirects visitors to this URL.</p>
                   </div>
                 </div>
+                <div class="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+                  <label class="form-label">Cover image (optional)</label>
+                  <div class="flex gap-2">
+                    <button type="button" class="btn-secondary flex-1" :class="{ '!border-gold-400 !text-gold-300': coverMode === 'upload' }" @click="coverMode = 'upload'"><Upload class="w-4 h-4"/>Upload</button>
+                    <button type="button" class="btn-secondary flex-1" :class="{ '!border-gold-400 !text-gold-300': coverMode === 'url' }" @click="coverMode = 'url'"><Link2 class="w-4 h-4"/>Image URL</button>
+                  </div>
+                  <div v-if="coverMode === 'upload'">
+                    <input ref="coverFileInput" type="file" accept="image/*" class="form-input" @change="onCoverFile" />
+                    <p class="text-xs text-gray-500 mt-1">JPG, PNG, WebP or GIF — max 5 MB.</p>
+                  </div>
+                  <div v-else>
+                    <input v-model="form.cover_image" type="url" placeholder="https://example.com/cover.jpg" class="form-input" @input="coverPreview = resolveCover(form.cover_image)" />
+                  </div>
+                  <div v-if="coverPreview" class="relative">
+                    <img :src="coverPreview" alt="Cover preview" class="w-full h-36 rounded-xl object-cover border border-white/10" />
+                    <button type="button" class="btn-icon absolute top-2 right-2 !bg-black/60" @click="clearCover"><Trash2 class="w-4 h-4"/></button>
+                  </div>
+                  <div v-else class="flex items-center gap-2 text-xs text-gray-500"><ImagePlus class="w-4 h-4"/>No cover — guest page shows the default icon.</div>
+                </div>
                 <div>
                   <label class="form-label">Status</label>
                   <select v-model.number="form.is_active" class="form-select">
@@ -135,7 +218,7 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn-secondary" @click="modal=false">Cancel</button>
-                <button type="submit" class="btn-primary" :disabled="saving"><Loader2 v-if="saving" class="w-4 h-4 animate-spin"/>{{ saving ? 'Saving…' : 'Save' }}</button>
+                <button type="submit" class="btn-primary" :disabled="saving || uploading"><Loader2 v-if="saving || uploading" class="w-4 h-4 animate-spin"/>{{ uploading ? 'Uploading…' : saving ? 'Saving…' : 'Save' }}</button>
               </div>
             </form>
           </div>

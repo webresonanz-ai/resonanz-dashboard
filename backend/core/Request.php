@@ -12,6 +12,7 @@ class Request
     private array $body   = [];
     private array $query  = [];
     private array $headers = [];
+    private array $files   = [];
 
     public function __construct()
     {
@@ -23,6 +24,12 @@ class Request
                 $this->body = $decoded;
             }
         }
+
+        // Support multipart/form-data (file uploads + regular fields)
+        if (!empty($_POST)) {
+            $this->body = array_merge($this->body, $_POST);
+        }
+        $this->files = $_FILES ?? [];
 
         $this->query = $_GET ?? [];
 
@@ -83,5 +90,18 @@ class Request
     public function all(): array
     {
         return $this->body;
+    }
+
+    /** Return a single uploaded file entry (or null). */
+    public function file(string $key): ?array
+    {
+        $f = $this->files[$key] ?? null;
+        return is_array($f) ? $f : null;
+    }
+
+    /** Return all uploaded files. */
+    public function files(): array
+    {
+        return $this->files;
     }
 }

@@ -10,7 +10,7 @@ use Core\Response;
 class EventController extends ResourceController
 {
     protected string $table    = 'events';
-    protected array  $fillable = ['title','event_date','event_time','venue','type','use_registration_url','registration_url','tag','is_active'];
+    protected array  $fillable = ['title','event_date','event_time','venue','type','use_registration_url','registration_url','cover_image','tag','is_active'];
 
     private ?array $columnsCache = null;
 
@@ -53,6 +53,12 @@ class EventController extends ResourceController
             if (isset($data['registration_url'])) {
                 $data['registration_url'] = trim((string) $data['registration_url']) ?: null;
             }
+        }
+
+        // Normalize optional cover image (upload path or external URL)
+        if (array_key_exists('cover_image', $data)) {
+            $cover = trim((string) $data['cover_image']);
+            $data['cover_image'] = $cover !== '' ? $cover : null;
         }
 
         // Drop legacy / alias fields if client still sends them

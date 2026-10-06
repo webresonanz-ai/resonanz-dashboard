@@ -19,10 +19,11 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function apiFetch(path, options = {}) {
+    const isForm = options.body instanceof FormData
     const res = await fetch(`${API}${path}`, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        ...(isForm ? {} : { 'Content-Type': 'application/json' }),
         ...(token.value ? { Authorization: `Bearer ${token.value}` } : {}),
         ...(options.headers ?? {}),
       },

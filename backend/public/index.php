@@ -43,6 +43,24 @@ set_exception_handler(function (Throwable $e) use ($debug): void {
     exit;
 });
 
+// ─── Serve uploaded files directly (php built-in server router mode) ──
+(function (): void {
+    $uri = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
+    if (is_string($uri) && str_starts_with($uri, '/uploads/')) {
+        $file = __DIR__ . $uri;
+        $real = realpath($file);
+        $base = realpath(__DIR__ . '/uploads');
+        if ($real !== false && $base !== false && str_starts_with($real, $base) && is_file($real)) {
+            $mime = mime_content_type($real) ?: 'application/octet-stream';
+            header('Content-Type: ' . $mime);
+            header('Content-Length: ' . filesize($real));
+            header('Cache-Control: public, max-age=86400');
+            readfile($real);
+            exit;
+        }
+    }
+})();
+
 // ─── PSR-4 autoloader ─────────────────────────────────────────
 spl_autoload_register(function (string $class): void {
     $map = [
@@ -75,6 +93,7 @@ use Controllers\CourseController;
 use Controllers\FacilityController;
 use Controllers\TeacherController;
 use Controllers\ContactController;
+use Controllers\UploadController;
 
 $req = new Request();
 $res = new Response();
@@ -96,6 +115,7 @@ $course   = new CourseController();
 $facility = new FacilityController();
 $teacher  = new TeacherController();
 $contact  = new ContactController();
+$upload   = new UploadController();
 
 // ═══════════════════════════════════════════════════════════════
 //  AUTH
@@ -184,6 +204,9 @@ $r->get('/api/admin/contact/stats', [$contact, 'stats'],   [$adminMw]);
 $r->get('/api/admin/contact',       [$contact, 'index'],   [$adminMw]);
 $r->get('/api/admin/contact/:id',   [$contact, 'show'],    [$adminMw]);
 $r->delete('/api/admin/contact/:id', [$contact, 'destroy'], [$adminMw]);
+
+// ── Uploads (images) ──────────────────────────────────────────
+$r->post('/api/admin/uploads', [$upload, 'store'], [$adminMw]);
 
 // ── Health ──────────────────────────────────────────────────
 $r->get('/api/health', fn($q,$s) => $s->success(['status' => 'ok', 'timestamp' => date('c')], 'API is running.'));

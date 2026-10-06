@@ -6,10 +6,18 @@ import { useApi } from '@/composables/useApi'
 
 useScrollReveal()
 
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const { data, loading, error, fetch } = useApi('/api/events')
 onMounted(fetch)
 
 const events = computed(() => data.value ?? [])
+
+function resolveCover(e) {
+  const raw = e?.cover_image ?? ''
+  const s = String(raw).trim()
+  if (!s) return ''
+  return /^https?:\/\//i.test(s) ? s : `${API_BASE}${s.startsWith('/') ? s : `/${s}`}`
+}
 
 const tagColors = {
   Featured: 'bg-gold-gradient text-maroon-950',
@@ -111,6 +119,10 @@ function handleBook(e) {
         <!-- Image area -->
         <div class="aspect-video bg-maroon-gradient relative flex items-center justify-center
                     border-b border-gold-500/20 overflow-hidden">
+          <img v-if="resolveCover(e)" :src="resolveCover(e)" :alt="e.title" loading="lazy"
+               class="absolute inset-0 w-full h-full object-cover"
+               @error="$event.target.style.display = 'none'" />
+          <div v-if="resolveCover(e)" class="absolute inset-0 bg-gradient-to-t from-maroon-950/60 via-transparent to-transparent"></div>
           <div class="absolute inset-0 bg-gold-gradient opacity-0 group-hover:opacity-10
                       transition-opacity duration-500"></div>
           <div class="absolute w-40 h-40 rounded-full border border-gold-400/10
@@ -128,7 +140,7 @@ function handleBook(e) {
               {{ e.type }}
             </span>
           </div>
-          <Ticket class="w-16 h-16 text-gold-400/40 group-hover:text-gold-400/70
+          <Ticket v-if="!resolveCover(e)" class="w-16 h-16 text-gold-400/40 group-hover:text-gold-400/70
                          group-hover:scale-110 transition-all duration-500"
                   stroke-width="1" />
         </div>
