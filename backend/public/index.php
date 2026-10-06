@@ -69,7 +69,7 @@ use Middleware\AdminMiddleware;
 use Middleware\ValidationMiddleware;
 use Controllers\AuthController;
 use Controllers\ScheduleController;
-use Controllers\ConcertController;
+use Controllers\EventController;
 use Controllers\NewsController;
 use Controllers\CourseController;
 use Controllers\FacilityController;
@@ -90,7 +90,7 @@ $rl      = new RateLimitMiddleware();
 // Controllers
 $auth     = new AuthController();
 $schedule = new ScheduleController();
-$concert  = new ConcertController();
+$event    = new EventController();
 $news     = new NewsController();
 $course   = new CourseController();
 $facility = new FacilityController();
@@ -124,7 +124,7 @@ $r->post('/api/auth/logout', [$auth, 'logout'],  [$authMw]);
 //  PUBLIC DATA  (read-only, no auth)
 // ═══════════════════════════════════════════════════════════════
 $r->get('/api/schedule',   [$schedule, 'publicIndex']);
-$r->get('/api/concerts',   [$concert,  'publicIndex']);
+$r->get('/api/events',    [$event,    'publicIndex']);
 $r->get('/api/news',       [$news,     'publicIndex']);
 $r->get('/api/courses',    [$course,   'publicIndex']);
 $r->get('/api/facilities', [$facility, 'publicIndex']);
@@ -149,11 +149,11 @@ $r->post('/api/admin/schedule',    [$schedule, 'store'],   [$adminMw]);
 $r->put('/api/admin/schedule/:id', [$schedule, 'update'],  [$adminMw]);
 $r->delete('/api/admin/schedule/:id', [$schedule, 'destroy'], [$adminMw]);
 
-// ── Concerts ────────────────────────────────────────────────
-$r->get('/api/admin/concerts',     [$concert, 'index'],   [$adminMw]);
-$r->post('/api/admin/concerts',    [$concert, 'store'],   [$adminMw]);
-$r->put('/api/admin/concerts/:id', [$concert, 'update'],  [$adminMw]);
-$r->delete('/api/admin/concerts/:id', [$concert, 'destroy'], [$adminMw]);
+// ── Events ────────────────────────────────────────────────
+$r->get('/api/admin/events',     [$event, 'index'],   [$adminMw]);
+$r->post('/api/admin/events',    [$event, 'store'],   [$adminMw]);
+$r->put('/api/admin/events/:id', [$event, 'update'],  [$adminMw]);
+$r->delete('/api/admin/events/:id', [$event, 'destroy'], [$adminMw]);
 
 // ── News ────────────────────────────────────────────────────
 $r->get('/api/admin/news',     [$news, 'index'],   [$adminMw]);

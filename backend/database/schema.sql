@@ -44,9 +44,9 @@ CREATE TABLE IF NOT EXISTS `schedule` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ───────────────────────────────────────────────────────────────
---  concerts
+--  events  (renamed from concerts)
 -- ───────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS `concerts` (
+CREATE TABLE IF NOT EXISTS `events` (
     `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `title`      VARCHAR(200) NOT NULL,
     `event_date` DATE         NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `concerts` (
     `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    INDEX `idx_concerts_date` (`event_date`)
+    INDEX `idx_events_date` (`event_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ───────────────────────────────────────────────────────────────
@@ -168,8 +168,8 @@ INSERT IGNORE INTO `schedule` (`id`,`day`,`time_start`,`time_end`,`course`,`room
 (5,'Friday','09:00:00','18:00:00','String Ensemble','Hall A','Mr. Lucas Müller',5),
 (6,'Saturday','08:00:00','16:00:00','Youth Orchestra','Main Hall','Ms. Sophia Chen',6);
 
--- Concerts
-INSERT IGNORE INTO `concerts` (`id`,`title`,`event_date`,`event_time`,`venue`,`price`,`tag`) VALUES
+-- Events (renamed from concerts)
+INSERT IGNORE INTO `events` (`id`,`title`,`event_date`,`event_time`,`venue`,`price`,`tag`) VALUES
 (1,'Winter Symphony Gala','2025-12-15','19:30:00','Grand Concert Hall',45.00,'Featured'),
 (2,'Young Virtuosos Showcase','2025-12-22','18:00:00','Resonanz Main Hall',25.00,'Student'),
 (3,'New Year Classical Night','2026-01-01','20:00:00','City Philharmonic',60.00,'Special'),

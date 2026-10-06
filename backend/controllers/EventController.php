@@ -7,9 +7,9 @@ namespace Controllers;
 use Core\Request;
 use Core\Response;
 
-class ConcertController extends ResourceController
+class EventController extends ResourceController
 {
-    protected string $table    = 'concerts';
+    protected string $table    = 'events';
     protected array  $fillable = ['title','event_date','event_time','venue','price','tag','is_active'];
 
     protected function orderClause(): string
@@ -20,7 +20,7 @@ class ConcertController extends ResourceController
     public function publicIndex(Request $req, Response $res): void
     {
         $stmt = $this->db->query(
-            "SELECT * FROM `concerts` WHERE is_active = 1 ORDER BY event_date ASC"
+            'SELECT * FROM `events` WHERE is_active = 1 ORDER BY event_date ASC'
         );
         $res->success($stmt->fetchAll(), 'OK');
     }

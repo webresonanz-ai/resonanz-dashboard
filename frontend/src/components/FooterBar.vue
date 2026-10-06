@@ -13,7 +13,7 @@ const socials = [
 
 const quickLinks = [
   { n: 'Schedule', p: '/schedule' },
-  { n: 'Concert', p: '/concert' },
+  { n: 'Event', p: '/event' },
   { n: 'Courses & Fee', p: '/courses' },
   { n: 'Teachers', p: '/teachers' },
 ]

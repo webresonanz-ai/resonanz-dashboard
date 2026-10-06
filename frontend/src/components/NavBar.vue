@@ -15,7 +15,7 @@ const userMenuOpen = ref(false)
 const navLinks = [
   { name: 'Home', path: '/' },
   { name: 'Schedule', path: '/schedule' },
-  { name: 'Concert', path: '/concert' },
+  { name: 'Event', path: '/event' },
   { name: 'News', path: '/news' },
   { name: 'Courses & Fee', path: '/courses' },
   { name: 'Facilitation', path: '/facilitation' },

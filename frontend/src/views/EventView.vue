@@ -6,10 +6,10 @@ import { useApi } from '@/composables/useApi'
 
 useScrollReveal()
 
-const { data, loading, error, fetch } = useApi('/api/concerts')
+const { data, loading, error, fetch } = useApi('/api/events')
 onMounted(fetch)
 
-const concerts = computed(() => data.value ?? [])
+const events = computed(() => data.value ?? [])
 
 const tagColors = {
   Featured: 'bg-gold-gradient text-maroon-950',
@@ -18,19 +18,15 @@ const tagColors = {
   New:      'bg-maroon-700/60 text-gold-300 border border-gold-500/30',
 }
 
-/** Format "YYYY-MM-DD" → "Dec 15, 2025" */
 function formatDate(d) {
   if (!d) return ''
-  const dt = new Date(d + 'T00:00:00')
-  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-/** Format "HH:MM:SS" → "HH:MM" */
 function formatTime(t) {
   return t ? t.slice(0, 5) : ''
 }
 
-/** Format price decimal → "$45.00" */
 function formatPrice(p) {
   return p !== undefined && p !== null ? `$${parseFloat(p).toFixed(2).replace('.00', '')}` : ''
 }
@@ -43,7 +39,7 @@ function formatPrice(p) {
     <div class="mb-14 reveal">
       <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">Live Performances</span>
       <h1 class="text-4xl sm:text-5xl font-bold mt-2 mb-4">
-        Upcoming <span class="gold-text">Concerts</span>
+        Upcoming <span class="gold-text">Events</span>
       </h1>
       <div class="flex items-center gap-3 mb-4">
         <div class="h-px w-12 bg-gold-gradient opacity-50"></div>
@@ -82,15 +78,15 @@ function formatPrice(p) {
     </div>
 
     <!-- ─── Empty ─── -->
-    <div v-else-if="!concerts.length" class="glass-card p-16 text-center">
-      <p class="text-gray-500">No upcoming concerts at the moment. Check back soon!</p>
+    <div v-else-if="!events.length" class="glass-card p-16 text-center">
+      <p class="text-gray-500">No upcoming events at the moment. Check back soon!</p>
     </div>
 
     <!-- ─── Grid ─── -->
     <div v-else class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
-        v-for="(c, i) in concerts"
-        :key="c.id"
+        v-for="(e, i) in events"
+        :key="e.id"
         class="reveal glass-card overflow-hidden card-lift animated-border group"
         :class="`delay-${(i % 3) * 100 + 100}`"
       >
@@ -103,10 +99,10 @@ function formatPrice(p) {
                       group-hover:scale-110 transition-transform duration-700"></div>
           <div class="absolute w-28 h-28 rounded-full border border-gold-400/15
                       group-hover:scale-125 transition-transform duration-700 delay-75"></div>
-          <div v-if="c.tag" class="absolute top-4 right-4 z-10">
+          <div v-if="e.tag" class="absolute top-4 right-4 z-10">
             <span class="px-3 py-1 text-xs font-semibold rounded-full shadow-gold"
-                  :class="tagColors[c.tag] ?? 'bg-gold-gradient text-maroon-950'">
-              {{ c.tag }}
+                  :class="tagColors[e.tag] ?? 'bg-gold-gradient text-maroon-950'">
+              {{ e.tag }}
             </span>
           </div>
           <Ticket class="w-16 h-16 text-gold-400/40 group-hover:text-gold-400/70
@@ -118,24 +114,24 @@ function formatPrice(p) {
         <div class="p-6">
           <h3 class="text-xl font-semibold text-white mb-4 group-hover:text-gold-400
                      transition-colors duration-300 leading-snug">
-            {{ c.title }}
+            {{ e.title }}
           </h3>
           <div class="space-y-2.5 text-sm text-gray-400 mb-6">
             <div class="flex items-center gap-2.5">
               <Calendar class="w-4 h-4 text-gold-400 shrink-0" />
-              {{ formatDate(c.event_date) }}
+              {{ formatDate(e.event_date) }}
             </div>
             <div class="flex items-center gap-2.5">
               <Clock class="w-4 h-4 text-gold-400 shrink-0" />
-              {{ formatTime(c.event_time) }}
+              {{ formatTime(e.event_time) }}
             </div>
             <div class="flex items-center gap-2.5">
               <MapPin class="w-4 h-4 text-gold-400 shrink-0" />
-              {{ c.venue }}
+              {{ e.venue }}
             </div>
           </div>
           <div class="flex items-center justify-between pt-4 border-t border-gold-500/20">
-            <span class="text-2xl font-bold gold-text font-serif">{{ formatPrice(c.price) }}</span>
+            <span class="text-2xl font-bold gold-text font-serif">{{ formatPrice(e.price) }}</span>
             <button class="inline-flex items-center gap-1.5 px-4 py-2 bg-gold-gradient text-maroon-950
                            font-semibold text-sm rounded-lg btn-magnetic relative overflow-hidden group/btn">
               <span class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full

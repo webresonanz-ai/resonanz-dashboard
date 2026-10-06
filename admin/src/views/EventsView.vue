@@ -6,7 +6,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { Plus, Pencil, Trash2, X, Loader2 } from 'lucide-vue-next'
 
-const { items, loading, saving, deleting, fetchAll, create, update, remove } = useCrud('/api/admin/concerts')
+const { items, loading, saving, deleting, fetchAll, create, update, remove } = useCrud('/api/admin/events')
 onMounted(fetchAll)
 
 const modal = ref(false); const isEdit = ref(false); const confirmId = ref(null)
@@ -21,11 +21,11 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
 
 <template>
   <div>
-    <PageHeader title="Concerts" subtitle="Manage upcoming concert listings" />
+    <PageHeader title="Events" subtitle="Manage upcoming event listings" />
     <div class="admin-card overflow-hidden">
       <div class="flex items-center justify-between px-5 py-4 border-b border-white/8">
-        <p class="text-sm text-gray-400">{{ items.length }} concerts</p>
-        <button class="btn-primary" @click="openCreate"><Plus class="w-4 h-4"/>Add Concert</button>
+        <p class="text-sm text-gray-400">{{ items.length }} events</p>
+        <button class="btn-primary" @click="openCreate"><Plus class="w-4 h-4"/>Add Event</button>
       </div>
       <div class="overflow-x-auto">
         <div v-if="loading" class="flex items-center justify-center py-16"><Loader2 class="w-6 h-6 text-gold-400 animate-spin"/></div>
@@ -58,7 +58,7 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
         <transition name="scale">
           <div v-if="modal" class="modal-box">
             <div class="modal-header">
-              <h3 class="font-semibold text-white">{{ isEdit ? 'Edit' : 'Add' }} Concert</h3>
+              <h3 class="font-semibold text-white">{{ isEdit ? 'Edit' : 'Add' }} Event</h3>
               <button class="btn-icon" @click="modal=false"><X class="w-4 h-4"/></button>
             </div>
             <form @submit.prevent="submit">
@@ -90,7 +90,7 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
         </transition>
       </div>
     </transition>
-    <ConfirmDialog :open="!!confirmId" title="Delete Concert" message="This will permanently remove the concert."
+    <ConfirmDialog :open="!!confirmId" title="Delete Event" message="This will permanently remove the event."
       :loading="deleting" @confirm="confirmDelete" @cancel="confirmId=null" />
   </div>
 </template>

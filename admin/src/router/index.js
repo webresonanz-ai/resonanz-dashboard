@@ -12,7 +12,7 @@ const router = createRouter({
       children: [
         { path: '',          name: 'dashboard',    component: () => import('@/views/DashboardView.vue') },
         { path: 'schedule',  name: 'schedule',     component: () => import('@/views/ScheduleView.vue') },
-        { path: 'concerts',  name: 'concerts',     component: () => import('@/views/ConcertsView.vue') },
+        { path: 'events',    name: 'events',       component: () => import('@/views/EventsView.vue') },
         { path: 'news',      name: 'news',         component: () => import('@/views/NewsView.vue') },
         { path: 'courses',   name: 'courses',      component: () => import('@/views/CoursesView.vue') },
         { path: 'facilities',name: 'facilities',   component: () => import('@/views/FacilitiesView.vue') },

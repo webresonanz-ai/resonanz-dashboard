@@ -8,7 +8,7 @@ const router = createRouter({
     // ─── Public routes ───────────────────────────────────────────
     { path: '/',            name: 'home',         component: HomeView,                                                              meta: { title: 'Home' } },
     { path: '/schedule',    name: 'schedule',     component: () => import('../views/ScheduleView.vue'),                             meta: { title: 'Schedule' } },
-    { path: '/concert',     name: 'concert',      component: () => import('../views/ConcertView.vue'),                              meta: { title: 'Concert' } },
+    { path: '/event',       name: 'event',        component: () => import('../views/EventView.vue'),                                meta: { title: 'Events' } },
     { path: '/news',        name: 'news',         component: () => import('../views/NewsView.vue'),                                 meta: { title: 'News' } },
     { path: '/courses',     name: 'courses',      component: () => import('../views/CoursesView.vue'),                              meta: { title: 'Courses & Fee' } },
     { path: '/facilitation',name: 'facilitation', component: () => import('../views/FacilitationView.vue'),                        meta: { title: 'Facilitation' } },

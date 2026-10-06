@@ -15,7 +15,7 @@ const sidebarOpen = ref(true)
 const nav = [
   { name: 'Dashboard',    to: '/',           icon: LayoutDashboard },
   { name: 'Schedule',     to: '/schedule',   icon: Calendar },
-  { name: 'Concerts',     to: '/concerts',   icon: Music },
+  { name: 'Events',      to: '/events',    icon: Music },
   { name: 'News',         to: '/news',       icon: Newspaper },
   { name: 'Courses',      to: '/courses',    icon: BookOpen },
   { name: 'Facilities',   to: '/facilities', icon: Building2 },

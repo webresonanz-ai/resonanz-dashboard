@@ -11,7 +11,7 @@ const loading = ref(true)
 
 const modules = [
   { name: 'Schedule',   to: '/schedule',   icon: Calendar,   color: 'from-blue-500/20 to-blue-600/10',   border: 'border-blue-500/20' },
-  { name: 'Concerts',   to: '/concerts',   icon: Music,      color: 'from-purple-500/20 to-purple-600/10', border: 'border-purple-500/20' },
+  { name: 'Events',     to: '/events',    icon: Music,      color: 'from-purple-500/20 to-purple-600/10', border: 'border-purple-500/20' },
   { name: 'News',       to: '/news',       icon: Newspaper,  color: 'from-emerald-500/20 to-emerald-600/10', border: 'border-emerald-500/20' },
   { name: 'Courses',    to: '/courses',    icon: BookOpen,   color: 'from-gold-500/20 to-gold-600/10',    border: 'border-gold-500/20' },
   { name: 'Facilities', to: '/facilities', icon: Building2,  color: 'from-cyan-500/20 to-cyan-600/10',    border: 'border-cyan-500/20' },
@@ -21,9 +21,9 @@ const modules = [
 
 onMounted(async () => {
   try {
-    const endpoints = ['/api/admin/schedule','/api/admin/concerts','/api/admin/news',
+    const endpoints = ['/api/admin/schedule','/api/admin/events','/api/admin/news',
                        '/api/admin/courses','/api/admin/facilities','/api/admin/teachers']
-    const labels = ['Classes','Concerts','News Articles','Courses','Facilities','Teachers']
+    const labels = ['Classes','Events','News Articles','Courses','Facilities','Teachers']
 
     const results = await Promise.all(endpoints.map(e => auth.apiFetch(e).catch(() => ({ data: [] }))))
     stats.value = results.map((r, i) => ({ label: labels[i], value: r.data?.length ?? 0 }))

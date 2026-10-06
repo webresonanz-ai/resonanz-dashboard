@@ -8,21 +8,21 @@ import { ref, computed, onMounted } from 'vue'
 useScrollReveal()
 
 // ─── Live counts from API ────────────────────────────────────
-const { data: concertsData, fetch: fetchConcerts } = useApi('/api/concerts')
+const { data: eventsData, fetch: fetchEvents } = useApi('/api/events')
 const { data: teachersData, fetch: fetchTeachers } = useApi('/api/teachers')
-onMounted(() => { fetchConcerts(); fetchTeachers() })
+onMounted(() => { fetchEvents(); fetchTeachers() })
 
-// Stats: first two values are driven by API counts; last two are fixed brand values
+// Stats: event count is driven by API; others are fixed brand values
 const stats = computed(() => [
-  { label: 'Students',   value: 500,                                       suffix: '+', icon: Users    },
-  { label: 'Concerts',   value: concertsData.value?.length ?? 120,         suffix: '+', icon: Music    },
-  { label: 'Awards',     value: 45,                                        suffix: '',  icon: Award    },
-  { label: 'Faculty',    value: teachersData.value?.length   ?? 25,        suffix: '',  icon: Calendar },
+  { label: 'Students', value: 500,                              suffix: '+', icon: Users    },
+  { label: 'Events',   value: eventsData.value?.length ?? 120,  suffix: '+', icon: Music    },
+  { label: 'Awards',   value: 45,                              suffix: '',  icon: Award    },
+  { label: 'Faculty',  value: teachersData.value?.length ?? 25, suffix: '',  icon: Calendar },
 ])
 
 const features = [
   { title: 'World-Class Faculty',         desc: 'Learn from internationally acclaimed musicians and educators.',    icon: Award },
-  { title: 'Performance Opportunities',   desc: 'Regular concerts and recitals in prestigious venues.',             icon: Music },
+  { title: 'Performance Opportunities',   desc: 'Regular events and recitals in prestigious venues.',              icon: Music },
   { title: 'Personalized Learning',       desc: 'One-on-one lessons tailored to your musical journey.',             icon: Users },
 ]
 
@@ -108,12 +108,12 @@ onMounted(() => {
                 <ArrowRight class="w-4 h-4 relative group-hover:translate-x-1 transition-transform" />
               </RouterLink>
 
-              <RouterLink to="/concert"
+              <RouterLink to="/event"
                 class="inline-flex items-center gap-2 px-6 py-3 border border-gold-500/40
                        text-gold-400 font-semibold rounded-xl transition-all duration-300
                        hover:bg-gold-500/10 hover:border-gold-500/70 hover:scale-105 hover:shadow-gold group">
                 <Sparkles class="w-4 h-4 group-hover:text-gold-300 transition-colors" />
-                Upcoming Concerts
+                Upcoming Events
               </RouterLink>
             </div>
           </div>
