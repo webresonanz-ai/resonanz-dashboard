@@ -12,10 +12,10 @@ const submitting = ref(false)
 const apiError  = ref('')
 
 const contactInfo = [
-  { icon: MapPin, label: 'Address',      value: '123 Harmony Street\nSymphony City, SC 45678' },
-  { icon: Phone,  label: 'Phone',        value: '+1 (555) 123-4567' },
-  { icon: Mail,   label: 'Email',        value: 'info@resonanz.org' },
-  { icon: Clock,  label: 'Office Hours', value: 'Mon – Fri: 9:00 – 18:00\nSat: 9:00 – 14:00' },
+  { icon: MapPin, label: 'Address',      value: 'Jl. Kertanegara No. 28\nJakarta Selatan, Indonesia' },
+  { icon: Phone,  label: 'Phone',        value: '+62 21 720 1918\n+62 858 1414 2277' },
+  { icon: Mail,   label: 'Email',        value: 'admin@theresonanz.com' },
+  { icon: Clock,  label: 'Office Hours', value: 'Mon – Sat: 9:00 – 18:00' },
 ]
 
 async function handleSubmit() {

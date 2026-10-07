@@ -70,19 +70,15 @@ async function handleLogout() {
                    shadow-gold group-hover:shadow-gold-lg transition-all duration-300
                    group-hover:scale-110 group-hover:rotate-6"
           >
-            <span
-              class="absolute inset-0 rounded-xl bg-gold-400 opacity-0 group-hover:opacity-30
-                     group-hover:scale-125 transition-all duration-500"
-            ></span>
-            <Music2 class="w-6 h-6 text-maroon-950 relative z-10" stroke-width="2.5" />
+            <img src="/logo_resonanz_square.webp" alt="Logo" class="w-7 h-7 relative z-10" />
           </div>
           <div class="leading-tight">
             <span class="block font-serif text-xl font-bold gold-text group-hover:gold-shimmer transition-all">
-              Resonanz
+              The Resonanz
             </span>
             <span class="block text-[10px] tracking-[0.2em] uppercase text-gold-500/70
                          transition-colors group-hover:text-gold-500/100">
-              Music Foundation
+              Music Studio
             </span>
           </div>
         </RouterLink>

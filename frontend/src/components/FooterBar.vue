@@ -6,9 +6,9 @@ import { useAppStore } from '@/stores/appStore'
 const store = useAppStore()
 
 const socials = [
-  { icon: Facebook, href: '#', label: 'Facebook' },
-  { icon: Instagram, href: '#', label: 'Instagram' },
-  { icon: Youtube, href: '#', label: 'YouTube' },
+  { icon: Facebook, href: 'https://www.facebook.com/TheResonanzMusicStudio', label: 'Facebook' },
+  { icon: Instagram, href: 'https://www.instagram.com/theresonanz/?hl=en', label: 'Instagram' },
+  { icon: Youtube, href: 'https://www.youtube.com/@TheResonanzMusic', label: 'YouTube' },
 ]
 
 const quickLinks = [
@@ -123,15 +123,15 @@ const programs = ['Classical Piano', 'String Ensemble', 'Vocal Performance', 'Mu
           <ul class="space-y-3.5 text-sm text-gray-400">
             <li class="flex items-start gap-3 group hover:text-gray-300 transition-colors cursor-default">
               <MapPin class="w-4 h-4 text-gold-400/70 mt-0.5 shrink-0 group-hover:text-gold-400 transition-colors" />
-              <span>123 Harmony Street, Symphony City</span>
+              <span>Jl. Kertanegara No. 28<br>Jakarta Selatan, Indonesia</span>
             </li>
             <li class="flex items-center gap-3 group hover:text-gray-300 transition-colors cursor-default">
               <Phone class="w-4 h-4 text-gold-400/70 shrink-0 group-hover:text-gold-400 transition-colors" />
-              <span>+1 (555) 123-4567</span>
+              <span>+62 21 720 1918<br>+62 858 1414 2277</span>
             </li>
             <li class="flex items-center gap-3 group hover:text-gold-400 transition-colors cursor-pointer">
               <Mail class="w-4 h-4 text-gold-400/70 shrink-0 group-hover:text-gold-400 transition-colors" />
-              <span>info@resonanz.org</span>
+              <span>admin@theresonanz.com</span>
             </li>
           </ul>
         </div>
@@ -140,7 +140,7 @@ const programs = ['Classical Piano', 'String Ensemble', 'Vocal Performance', 'Mu
 
       <!-- ─── Bottom bar ─── -->
       <div class="mt-12 pt-6 border-t border-gold-500/10 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500">
-        <p>&copy; {{ store.currentYear }} Resonanz Music Foundation. All rights reserved.</p>
+        <p>&copy; {{ store.currentYear }} The Resonanz Music Studio. All rights reserved.</p>
         <p class="flex items-center gap-2">
           Crafted with <span class="text-gold-400 text-base">♪</span> for musicians
         </p>
