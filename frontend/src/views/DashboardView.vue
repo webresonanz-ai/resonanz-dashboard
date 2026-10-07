@@ -1,5 +1,7 @@
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/authStore'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import {
@@ -7,16 +9,25 @@ import {
   Settings, LogOut, ArrowRight, Sparkles,
 } from 'lucide-vue-next'
 
+const { t } = useI18n()
+
 useScrollReveal()
 
 const auth = useAuthStore()
 
-const quickLinks = [
-  { label: 'Schedule',     to: '/schedule',     icon: Calendar,  desc: 'View class timetable' },
-  { label: 'Concerts',     to: '/concert',      icon: Music,     desc: 'Upcoming performances' },
-  { label: 'Courses',      to: '/courses',      icon: BookOpen,  desc: 'Browse programs & fees' },
-  { label: 'Teachers',     to: '/teachers',     icon: Users,     desc: 'Meet the faculty' },
-]
+const quickLinks = computed(() => [
+  { label: t('dashboard.links.schedule'), to: '/schedule', icon: Calendar,  desc: t('dashboard.links.scheduleDesc') },
+  { label: t('dashboard.links.concerts'), to: '/concert',  icon: Music,     desc: t('dashboard.links.concertsDesc') },
+  { label: t('dashboard.links.courses'),  to: '/courses',  icon: BookOpen,  desc: t('dashboard.links.coursesDesc') },
+  { label: t('dashboard.links.teachers'), to: '/teachers', icon: Users,     desc: t('dashboard.links.teachersDesc') },
+])
+
+const stats = computed(() => [
+  { label: t('dashboard.stats.classes'),       value: '3', sub: t('dashboard.stats.enrolled'),     icon: BookOpen },
+  { label: t('dashboard.stats.concerts'),      value: '2', sub: t('dashboard.stats.upcoming'),     icon: Music },
+  { label: t('dashboard.stats.awards'),        value: '1', sub: t('dashboard.stats.earned'),       icon: Award },
+  { label: t('dashboard.stats.notifications'), value: '5', sub: t('dashboard.stats.new'),          icon: Bell },
+])
 </script>
 
 <template>
@@ -27,12 +38,12 @@ const quickLinks = [
       <div class="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">
-            Member Dashboard
+            {{ $t('dashboard.eyebrow') }}
           </span>
           <h1 class="text-3xl sm:text-4xl font-bold mt-2">
-            Welcome back, <span class="gold-text">{{ auth.userName }}</span> 👋
+            {{ $t('dashboard.welcome') }} <span class="gold-text">{{ auth.userName }}</span> 👋
           </h1>
-          <p class="text-gray-400 mt-1.5">Here's what's happening at Resonanz.</p>
+          <p class="text-gray-400 mt-1.5">{{ $t('dashboard.subtitle') }}</p>
         </div>
 
         <!-- Avatar -->
@@ -60,12 +71,7 @@ const quickLinks = [
     <!-- ─── Stats ─── -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
       <div
-        v-for="(stat, i) in [
-          { label: 'Classes', value: '3', sub: 'enrolled', icon: BookOpen },
-          { label: 'Concerts', value: '2', sub: 'upcoming', icon: Music },
-          { label: 'Awards', value: '1', sub: 'earned', icon: Award },
-          { label: 'Notifications', value: '5', sub: 'new', icon: Bell },
-        ]"
+        v-for="(stat, i) in stats"
         :key="stat.label"
         class="reveal glass-card p-5 card-lift animated-border group cursor-default"
         :class="`delay-${(i + 1) * 100}`"
@@ -89,7 +95,7 @@ const quickLinks = [
     <!-- ─── Quick links grid ─── -->
     <div class="mb-10">
       <h2 class="reveal text-xl font-serif font-bold text-white mb-5">
-        Quick <span class="gold-text">Access</span>
+        {{ $t('dashboard.quickAccess') }} <span class="gold-text">{{ $t('dashboard.quickAccessHighlight') }}</span>
       </h2>
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <RouterLink
@@ -114,7 +120,7 @@ const quickLinks = [
           <p class="text-xs text-gray-400 mb-3">{{ link.desc }}</p>
           <span class="inline-flex items-center gap-1 text-xs text-gold-400 font-medium
                        group-hover:gap-2 transition-all">
-            Go <ArrowRight class="w-3.5 h-3.5" />
+            {{ $t('common.go') }} <ArrowRight class="w-3.5 h-3.5" />
           </span>
         </RouterLink>
       </div>
@@ -123,15 +129,15 @@ const quickLinks = [
     <!-- ─── Account section ─── -->
     <div class="reveal-scale glass-card p-8 animated-border delay-200">
       <h2 class="text-xl font-serif font-bold text-white mb-6">
-        Account <span class="gold-text">Settings</span>
+        {{ $t('dashboard.accountTitle') }} <span class="gold-text">{{ $t('dashboard.accountHighlight') }}</span>
       </h2>
       <div class="grid sm:grid-cols-2 gap-4">
         <div class="flex items-center gap-3 p-4 rounded-xl bg-white/3 border border-gold-500/10
                     hover:border-gold-500/25 transition-all group cursor-default">
           <Settings class="w-5 h-5 text-gold-400/70 group-hover:text-gold-400 transition-colors" />
           <div>
-            <p class="text-sm font-medium text-white">Profile Settings</p>
-            <p class="text-xs text-gray-500">Manage your details</p>
+            <p class="text-sm font-medium text-white">{{ $t('dashboard.profile') }}</p>
+            <p class="text-xs text-gray-500">{{ $t('dashboard.profileDesc') }}</p>
           </div>
         </div>
         <button
@@ -142,9 +148,9 @@ const quickLinks = [
           <LogOut class="w-5 h-5 text-red-400/60 group-hover:text-red-400 transition-colors" />
           <div>
             <p class="text-sm font-medium text-white group-hover:text-red-300 transition-colors">
-              Sign Out
+              {{ $t('dashboard.signOut') }}
             </p>
-            <p class="text-xs text-gray-500">End your session</p>
+            <p class="text-xs text-gray-500">{{ $t('dashboard.signOutDesc') }}</p>
           </div>
         </button>
       </div>

@@ -1,8 +1,12 @@
 <script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import { Music2, Facebook, Instagram, Youtube, Mail, Phone, MapPin, ArrowUpRight } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/appStore'
+import LanguageSwitcher from './LanguageSwitcher.vue'
 
+const { t } = useI18n()
 const store = useAppStore()
 
 const socials = [
@@ -11,12 +15,12 @@ const socials = [
   { icon: Youtube, href: 'https://www.youtube.com/@TheResonanzMusic', label: 'YouTube' },
 ]
 
-const quickLinks = [
-  { n: 'Schedule', p: '/schedule' },
-  { n: 'Event', p: '/event' },
-  { n: 'Courses & Fee', p: '/courses' },
-  { n: 'Teachers', p: '/teachers' },
-]
+const quickLinks = computed(() => [
+  { n: t('nav.schedule'), p: '/schedule' },
+  { n: t('nav.event'), p: '/event' },
+  { n: t('nav.courses'), p: '/courses' },
+  { n: t('nav.teachers'), p: '/teachers' },
+])
 
 const programs = ['Classical Piano', 'String Ensemble', 'Vocal Performance', 'Music Theory']
 </script>
@@ -54,7 +58,7 @@ const programs = ['Classical Piano', 'String Ensemble', 'Vocal Performance', 'Mu
           </RouterLink>
 
           <p class="text-sm text-gray-400 leading-relaxed mb-6 max-w-[220px]">
-            Nurturing musical excellence and artistic expression through world-class education and performance.
+            {{ $t('footer.tagline') }}
           </p>
 
           <div class="flex gap-2.5">
@@ -76,7 +80,7 @@ const programs = ['Classical Piano', 'String Ensemble', 'Vocal Performance', 'Mu
         <!-- ─── Quick Links ─── -->
         <div>
           <h4 class="text-gold-400 font-serif text-lg mb-5 relative inline-block">
-            Quick Links
+            {{ $t('footer.quickLinks') }}
             <span class="absolute -bottom-1 left-0 h-px w-full bg-gold-gradient opacity-40"></span>
           </h4>
           <ul class="space-y-2.5 text-sm">
@@ -99,7 +103,7 @@ const programs = ['Classical Piano', 'String Ensemble', 'Vocal Performance', 'Mu
         <!-- ─── Programs ─── -->
         <div>
           <h4 class="text-gold-400 font-serif text-lg mb-5 relative inline-block">
-            Programs
+            {{ $t('footer.programs') }}
             <span class="absolute -bottom-1 left-0 h-px w-full bg-gold-gradient opacity-40"></span>
           </h4>
           <ul class="space-y-2.5 text-sm text-gray-400">
@@ -117,7 +121,7 @@ const programs = ['Classical Piano', 'String Ensemble', 'Vocal Performance', 'Mu
         <!-- ─── Contact ─── -->
         <div>
           <h4 class="text-gold-400 font-serif text-lg mb-5 relative inline-block">
-            Contact
+            {{ $t('footer.contact') }}
             <span class="absolute -bottom-1 left-0 h-px w-full bg-gold-gradient opacity-40"></span>
           </h4>
           <ul class="space-y-3.5 text-sm text-gray-400">
@@ -140,10 +144,13 @@ const programs = ['Classical Piano', 'String Ensemble', 'Vocal Performance', 'Mu
 
       <!-- ─── Bottom bar ─── -->
       <div class="mt-12 pt-6 border-t border-gold-500/10 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500">
-        <p>&copy; {{ store.currentYear }} The Resonanz Music Studio. All rights reserved.</p>
-        <p class="flex items-center gap-2">
-          Crafted with <span class="text-gold-400 text-base">♪</span> for musicians
-        </p>
+        <p>&copy; {{ store.currentYear }} The Resonanz Music Studio. {{ $t('footer.rights') }}</p>
+        <div class="flex items-center gap-4">
+          <LanguageSwitcher />
+          <p class="flex items-center gap-2">
+            {{ $t('footer.crafted') }}
+          </p>
+        </div>
       </div>
     </div>
 

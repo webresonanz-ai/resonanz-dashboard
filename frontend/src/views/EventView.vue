@@ -1,8 +1,11 @@
 <script setup>
 import { computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Calendar, MapPin, Ticket, Clock, ArrowRight, AlertCircle, RefreshCw, ExternalLink } from 'lucide-vue-next'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import { useApi } from '@/composables/useApi'
+
+const { locale } = useI18n()
 
 useScrollReveal()
 
@@ -28,7 +31,8 @@ const tagColors = {
 
 function formatDate(d) {
   if (!d) return ''
-  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const tag = locale.value === 'id' ? 'id-ID' : 'en-US'
+  return new Date(d + 'T00:00:00').toLocaleDateString(tag, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function formatTime(t) {
@@ -63,9 +67,9 @@ function handleBook(e) {
 
     <!-- ─── Header ─── -->
     <div class="mb-14 reveal">
-      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">Live Performances</span>
+      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">{{ $t('events.eyebrow') }}</span>
       <h1 class="text-4xl sm:text-5xl font-bold mt-2 mb-4">
-        Upcoming <span class="gold-text">Events</span>
+        {{ $t('events.titleA') }} <span class="gold-text">{{ $t('events.titleHighlight') }}</span>
       </h1>
       <div class="flex items-center gap-3 mb-4">
         <div class="h-px w-12 bg-gold-gradient opacity-50"></div>
@@ -73,7 +77,7 @@ function handleBook(e) {
         <div class="h-px w-24 bg-gold-gradient opacity-30"></div>
       </div>
       <p class="text-gray-400 max-w-2xl">
-        Experience the magic of live music performed by our talented students and acclaimed faculty.
+        {{ $t('events.subtitle') }}
       </p>
     </div>
 
@@ -99,13 +103,13 @@ function handleBook(e) {
       <button @click="fetch"
               class="inline-flex items-center gap-2 px-5 py-2.5 bg-gold-gradient text-maroon-950
                      font-semibold rounded-xl text-sm btn-magnetic">
-        <RefreshCw class="w-4 h-4" /> Retry
+        <RefreshCw class="w-4 h-4" /> {{ $t('common.retry') }}
       </button>
     </div>
 
     <!-- ─── Empty ─── -->
     <div v-else-if="!events.length" class="glass-card p-16 text-center">
-      <p class="text-gray-500">No upcoming events at the moment. Check back soon!</p>
+      <p class="text-gray-500">{{ $t('events.empty') }}</p>
     </div>
 
     <!-- ─── Grid ─── -->
@@ -166,14 +170,14 @@ function handleBook(e) {
             </div>
           </div>
           <div class="flex items-center justify-between pt-4 border-t border-gold-500/20">
-            <span class="text-sm font-medium text-gold-300">{{ e.type || 'Concert' }}</span>
+            <span class="text-sm font-medium text-gold-300">{{ e.type || $t('events.fallbackType') }}</span>
             <a v-if="isExternal(e)" :href="getRegistrationUrl(e)" target="_blank" rel="noopener"
                class="inline-flex items-center gap-1.5 px-4 py-2 bg-gold-gradient text-maroon-950
                       font-semibold text-sm rounded-lg btn-magnetic relative overflow-hidden group/btn">
               <span class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full
                            bg-gradient-to-r from-transparent via-white/25 to-transparent
                            transition-transform duration-500"></span>
-              <span class="relative">Book Now</span>
+              <span class="relative">{{ $t('common.bookNow') }}</span>
               <ExternalLink class="w-3.5 h-3.5 relative" />
             </a>
             <button v-else @click="handleBook(e)"
@@ -182,7 +186,7 @@ function handleBook(e) {
               <span class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full
                            bg-gradient-to-r from-transparent via-white/25 to-transparent
                            transition-transform duration-500"></span>
-              <span class="relative">Book Now</span>
+              <span class="relative">{{ $t('common.bookNow') }}</span>
               <ArrowRight class="w-3.5 h-3.5 relative group-hover/btn:translate-x-0.5 transition-transform" />
             </button>
           </div>

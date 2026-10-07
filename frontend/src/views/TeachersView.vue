@@ -17,9 +17,9 @@ const teachers = computed(() => data.value ?? [])
 
     <!-- ─── Header ─── -->
     <div class="mb-14 reveal">
-      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">Our People</span>
+      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">{{ $t('teachers.eyebrow') }}</span>
       <h1 class="text-4xl sm:text-5xl font-bold mt-2 mb-4">
-        Meet the <span class="gold-text">Teachers</span>
+        {{ $t('teachers.titleA') }} <span class="gold-text">{{ $t('teachers.titleHighlight') }}</span>
       </h1>
       <div class="flex items-center gap-3 mb-4">
         <div class="h-px w-12 bg-gold-gradient opacity-50"></div>
@@ -27,7 +27,7 @@ const teachers = computed(() => data.value ?? [])
         <div class="h-px w-24 bg-gold-gradient opacity-30"></div>
       </div>
       <p class="text-gray-400 max-w-2xl">
-        Learn from internationally acclaimed artists and dedicated educators who bring passion to every lesson.
+        {{ $t('teachers.subtitle') }}
       </p>
     </div>
 
@@ -51,13 +51,13 @@ const teachers = computed(() => data.value ?? [])
       <button @click="fetch"
               class="inline-flex items-center gap-2 px-5 py-2.5 bg-gold-gradient text-maroon-950
                      font-semibold rounded-xl text-sm btn-magnetic">
-        <RefreshCw class="w-4 h-4" /> Retry
+        <RefreshCw class="w-4 h-4" /> {{ $t('common.retry') }}
       </button>
     </div>
 
     <!-- ─── Empty ─── -->
     <div v-else-if="!teachers.length" class="glass-card p-16 text-center">
-      <p class="text-gray-500">No faculty profiles listed yet.</p>
+      <p class="text-gray-500">{{ $t('teachers.empty') }}</p>
     </div>
 
     <!-- ─── Grid ─── -->
@@ -93,13 +93,13 @@ const teachers = computed(() => data.value ?? [])
            class="inline-flex items-center gap-2 text-sm text-gold-400 font-medium
                   hover:text-gold-300 group/btn transition-all">
           <Mail class="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-          <span class="group-hover/btn:translate-x-0.5 transition-transform">Contact</span>
+          <span class="group-hover/btn:translate-x-0.5 transition-transform">{{ $t('common.contact') }}</span>
         </a>
         <button v-else
                 class="inline-flex items-center gap-2 text-sm text-gold-400 font-medium
                        hover:text-gold-300 group/btn transition-all">
           <Mail class="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-          <span class="group-hover/btn:translate-x-0.5 transition-transform">Contact</span>
+          <span class="group-hover/btn:translate-x-0.5 transition-transform">{{ $t('common.contact') }}</span>
         </button>
       </div>
     </div>

@@ -1,12 +1,15 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/authStore'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import {
   Music2, User, Mail, Lock, Eye, EyeOff, ArrowRight,
   AlertCircle, Loader2, Check, X,
 } from 'lucide-vue-next'
 
+const { t } = useI18n()
 const router = useRouter()
 const auth   = useAuthStore()
 
@@ -25,14 +28,20 @@ const touched = ref({ name: false, email: false, password: false, passwordConfir
 
 // ─── Password strength ────────────────────────────────────────
 const strengthRules = computed(() => [
-  { label: 'At least 8 characters', met: password.value.length >= 8 },
-  { label: 'Contains a number',     met: /\d/.test(password.value) },
-  { label: 'Contains uppercase',    met: /[A-Z]/.test(password.value) },
-  { label: 'Contains lowercase',    met: /[a-z]/.test(password.value) },
+  { label: t('auth.rules.length'), met: password.value.length >= 8 },
+  { label: t('auth.rules.number'), met: /\d/.test(password.value) },
+  { label: t('auth.rules.upper'),  met: /[A-Z]/.test(password.value) },
+  { label: t('auth.rules.lower'),  met: /[a-z]/.test(password.value) },
 ])
 
 const strengthScore = computed(() => strengthRules.value.filter((r) => r.met).length)
-const strengthLabel = computed(() => ['', 'Weak', 'Fair', 'Good', 'Strong'][strengthScore.value])
+const strengthLabel = computed(() => [
+  '',
+  t('auth.strength.weak'),
+  t('auth.strength.fair'),
+  t('auth.strength.good'),
+  t('auth.strength.strong'),
+][strengthScore.value])
 const strengthColor = computed(() => [
   '', 'bg-red-500', 'bg-orange-400', 'bg-yellow-400', 'bg-emerald-400',
 ][strengthScore.value])
@@ -40,29 +49,29 @@ const strengthColor = computed(() => [
 // ─── Field errors ─────────────────────────────────────────────
 const nameError = computed(() => {
   if (!touched.value.name) return ''
-  if (!name.value.trim()) return 'Name is required.'
-  if (name.value.trim().length < 2) return 'Name must be at least 2 characters.'
+  if (!name.value.trim()) return t('auth.nameRequired')
+  if (name.value.trim().length < 2) return t('auth.nameTooShort')
   return ''
 })
 
 const emailError = computed(() => {
   if (!touched.value.email) return ''
-  if (!email.value) return 'Email is required.'
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) return 'Enter a valid email address.'
+  if (!email.value) return t('auth.emailRequired')
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) return t('auth.emailInvalid')
   return ''
 })
 
 const passwordError = computed(() => {
   if (!touched.value.password) return ''
-  if (!password.value) return 'Password is required.'
-  if (password.value.length < 8) return 'Password must be at least 8 characters.'
+  if (!password.value) return t('auth.passwordRequired')
+  if (password.value.length < 8) return t('auth.passwordTooShort')
   return ''
 })
 
 const passwordConfirmError = computed(() => {
   if (!touched.value.passwordConfirm) return ''
-  if (!passwordConfirm.value) return 'Please confirm your password.'
-  if (password.value !== passwordConfirm.value) return 'Passwords do not match.'
+  if (!passwordConfirm.value) return t('auth.confirmRequired')
+  if (password.value !== passwordConfirm.value) return t('auth.passwordMismatch')
   return ''
 })
 
@@ -112,6 +121,10 @@ async function handleSubmit() {
 
     <div class="w-full max-w-md relative z-10">
 
+      <div class="flex justify-end mb-4">
+        <LanguageSwitcher />
+      </div>
+
       <!-- ─── Logo + heading ─── -->
       <div class="text-center mb-8">
         <RouterLink to="/" class="inline-flex flex-col items-center gap-3 group">
@@ -123,8 +136,8 @@ async function handleSubmit() {
           <span class="font-serif text-2xl font-bold gold-shimmer">Resonanz</span>
         </RouterLink>
 
-        <h1 class="mt-5 text-3xl font-bold text-white">Create your account</h1>
-        <p class="mt-1.5 text-gray-400 text-sm">Join the Resonanz music community</p>
+        <h1 class="mt-5 text-3xl font-bold text-white">{{ $t('auth.registerTitle') }}</h1>
+        <p class="mt-1.5 text-gray-400 text-sm">{{ $t('auth.registerSubtitle') }}</p>
       </div>
 
       <!-- ─── Card ─── -->
@@ -147,7 +160,7 @@ async function handleSubmit() {
 
           <!-- Name -->
           <div>
-            <label for="name" class="block text-sm font-medium text-gray-300 mb-2">Full name</label>
+            <label for="name" class="block text-sm font-medium text-gray-300 mb-2">{{ $t('auth.fullName') }}</label>
             <div class="relative group">
               <div class="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none
                           transition-colors duration-300"
@@ -159,7 +172,7 @@ async function handleSubmit() {
                 v-model="name"
                 type="text"
                 autocomplete="name"
-                placeholder="Your full name"
+                :placeholder="$t('auth.fullNamePlaceholder')"
                 @blur="touched.name = true"
                 class="w-full pl-10 pr-4 py-3 bg-maroon-950/60 rounded-xl text-white
                        placeholder-gray-500 transition-all duration-300 outline-none
@@ -178,7 +191,7 @@ async function handleSubmit() {
 
           <!-- Email -->
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Email address</label>
+            <label for="email" class="block text-sm font-medium text-gray-300 mb-2">{{ $t('auth.email') }}</label>
             <div class="relative group">
               <div class="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none
                           transition-colors duration-300"
@@ -209,7 +222,7 @@ async function handleSubmit() {
 
           <!-- Password -->
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+            <label for="password" class="block text-sm font-medium text-gray-300 mb-2">{{ $t('auth.password') }}</label>
             <div class="relative group">
               <div class="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none
                           transition-colors duration-300"
@@ -221,7 +234,7 @@ async function handleSubmit() {
                 v-model="password"
                 :type="showPw ? 'text' : 'password'"
                 autocomplete="new-password"
-                placeholder="Min. 8 characters"
+                :placeholder="$t('auth.passwordMin')"
                 @blur="touched.password = true"
                 class="w-full pl-10 pr-11 py-3 bg-maroon-950/60 rounded-xl text-white
                        placeholder-gray-500 transition-all duration-300 outline-none
@@ -233,7 +246,7 @@ async function handleSubmit() {
               <button type="button" @click="showPw = !showPw"
                       class="absolute right-3.5 top-1/2 -translate-y-1/2
                              text-gold-500/50 hover:text-gold-400 transition-colors p-0.5"
-                      :aria-label="showPw ? 'Hide password' : 'Show password'">
+                      :aria-label="showPw ? $t('auth.hidePw') : $t('auth.showPw')">
                 <EyeOff v-if="showPw" class="w-[18px] h-[18px]" />
                 <Eye    v-else        class="w-[18px] h-[18px]" />
               </button>
@@ -282,7 +295,7 @@ async function handleSubmit() {
           <!-- Confirm password -->
           <div>
             <label for="passwordConfirm" class="block text-sm font-medium text-gray-300 mb-2">
-              Confirm password
+              {{ $t('auth.confirmPassword') }}
             </label>
             <div class="relative group">
               <div class="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none
@@ -295,7 +308,7 @@ async function handleSubmit() {
                 v-model="passwordConfirm"
                 :type="showPwC ? 'text' : 'password'"
                 autocomplete="new-password"
-                placeholder="Repeat your password"
+                :placeholder="$t('auth.confirmPlaceholder')"
                 @blur="touched.passwordConfirm = true"
                 class="w-full pl-10 pr-11 py-3 bg-maroon-950/60 rounded-xl text-white
                        placeholder-gray-500 transition-all duration-300 outline-none
@@ -309,7 +322,7 @@ async function handleSubmit() {
               <button type="button" @click="showPwC = !showPwC"
                       class="absolute right-3.5 top-1/2 -translate-y-1/2
                              text-gold-500/50 hover:text-gold-400 transition-colors p-0.5"
-                      :aria-label="showPwC ? 'Hide password' : 'Show password'">
+                      :aria-label="showPwC ? $t('auth.hidePw') : $t('auth.showPw')">
                 <EyeOff v-if="showPwC" class="w-[18px] h-[18px]" />
                 <Eye    v-else         class="w-[18px] h-[18px]" />
               </button>
@@ -343,10 +356,10 @@ async function handleSubmit() {
                          transition-transform duration-500"></span>
             <transition name="icon-swap" mode="out-in">
               <span v-if="loading" key="loading" class="flex items-center gap-2 relative">
-                <Loader2 class="w-4 h-4 animate-spin" /> Creating account…
+                <Loader2 class="w-4 h-4 animate-spin" /> {{ $t('auth.creating') }}
               </span>
               <span v-else key="idle" class="flex items-center gap-2 relative">
-                Create Account <ArrowRight class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                {{ $t('auth.create') }} <ArrowRight class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </span>
             </transition>
           </button>
@@ -356,7 +369,7 @@ async function handleSubmit() {
         <!-- Divider -->
         <div class="flex items-center gap-3 my-6">
           <div class="flex-1 h-px bg-gold-500/15"></div>
-          <span class="text-xs text-gray-500">Already have an account?</span>
+          <span class="text-xs text-gray-500">{{ $t('auth.haveAccount') }}</span>
           <div class="flex-1 h-px bg-gold-500/15"></div>
         </div>
 
@@ -368,7 +381,7 @@ async function handleSubmit() {
                  hover:bg-gold-500/8 hover:border-gold-500/60 transition-all duration-300
                  btn-magnetic group"
         >
-          Sign in instead
+          {{ $t('auth.signInInstead') }}
           <ArrowRight class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
         </RouterLink>
       </div>
@@ -376,7 +389,7 @@ async function handleSubmit() {
       <!-- Back link -->
       <p class="text-center mt-6 text-sm text-gray-500">
         <RouterLink to="/" class="hover:text-gold-400 transition-colors">
-          ← Back to home
+          {{ $t('auth.backHome') }}
         </RouterLink>
       </p>
 

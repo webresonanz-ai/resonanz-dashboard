@@ -1,8 +1,11 @@
 <script setup>
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import { apiPost } from '@/composables/useApi'
+
+const { t } = useI18n()
 
 useScrollReveal()
 
@@ -11,12 +14,12 @@ const submitted = ref(false)
 const submitting = ref(false)
 const apiError  = ref('')
 
-const contactInfo = [
-  { icon: MapPin, label: 'Address',      value: 'Jl. Kertanegara No. 28\nJakarta Selatan, Indonesia' },
-  { icon: Phone,  label: 'Phone',        value: '+62 21 720 1918\n+62 858 1414 2277' },
-  { icon: Mail,   label: 'Email',        value: 'admin@theresonanz.com' },
-  { icon: Clock,  label: 'Office Hours', value: 'Mon – Sat: 9:00 – 18:00' },
-]
+const contactInfo = computed(() => [
+  { icon: MapPin, label: t('contact.labels.address'),     value: 'Jl. Kertanegara No. 28\nJakarta Selatan, Indonesia' },
+  { icon: Phone,  label: t('contact.labels.phone'),       value: '+62 21 720 1918\n+62 858 1414 2277' },
+  { icon: Mail,   label: t('contact.labels.email'),       value: 'admin@theresonanz.com' },
+  { icon: Clock,  label: t('contact.labels.officeHours'), value: 'Mon – Sat: 9:00 – 18:00' },
+])
 
 async function handleSubmit() {
   submitting.value = true
@@ -39,7 +42,7 @@ async function handleSubmit() {
       const first = Object.values(e.errors)[0]
       apiError.value = Array.isArray(first) ? first[0] : String(first)
     } else {
-      apiError.value = e.message ?? 'Could not send your message. Please try again.'
+      apiError.value = e.message ?? t('contact.sendFailed')
     }
   } finally {
     submitting.value = false
@@ -52,9 +55,9 @@ async function handleSubmit() {
 
     <!-- ─── Header ─── -->
     <div class="mb-14 reveal">
-      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">Get in Touch</span>
+      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">{{ $t('contact.eyebrow') }}</span>
       <h1 class="text-4xl sm:text-5xl font-bold mt-2 mb-4">
-        Contact <span class="gold-text">Us</span>
+        {{ $t('contact.titleA') }} <span class="gold-text">{{ $t('contact.titleHighlight') }}</span>
       </h1>
       <div class="flex items-center gap-3 mb-4">
         <div class="h-px w-12 bg-gold-gradient opacity-50"></div>
@@ -62,7 +65,7 @@ async function handleSubmit() {
         <div class="h-px w-24 bg-gold-gradient opacity-30"></div>
       </div>
       <p class="text-gray-400 max-w-2xl">
-        Have questions about enrollment, concerts, or partnerships? We'd love to hear from you.
+        {{ $t('contact.subtitle') }}
       </p>
     </div>
 
@@ -72,7 +75,7 @@ async function handleSubmit() {
       <div class="reveal-left space-y-6">
         <div class="glass-card p-8 animated-border">
           <h2 class="text-2xl font-serif font-bold mb-8">
-            Visit <span class="gold-text">Resonanz</span>
+            {{ $t('contact.visitA') }} <span class="gold-text">Resonanz</span>
           </h2>
           <div class="space-y-6">
             <div
@@ -110,16 +113,16 @@ async function handleSubmit() {
                           shadow-gold-lg glow-pulse">
                 <CheckCircle class="w-8 h-8 text-maroon-950" />
               </div>
-              <h3 class="text-2xl font-serif font-bold text-white">Message Sent!</h3>
+              <h3 class="text-2xl font-serif font-bold text-white">{{ $t('contact.successTitle') }}</h3>
               <p class="text-gray-400 text-sm max-w-xs">
-                Thank you for reaching out. We'll get back to you shortly.
+                {{ $t('contact.successText') }}
               </p>
             </div>
           </div>
         </transition>
 
         <h2 class="text-2xl font-serif font-bold mb-6">
-          Send a <span class="gold-text">Message</span>
+          {{ $t('contact.formTitleA') }} <span class="gold-text">{{ $t('contact.formTitleHighlight') }}</span>
         </h2>
 
         <!-- API error banner -->
@@ -134,16 +137,16 @@ async function handleSubmit() {
         <form @submit.prevent="handleSubmit" class="space-y-5">
           <div class="grid sm:grid-cols-2 gap-5">
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Name</label>
+              <label class="block text-sm font-medium text-gray-300 mb-2">{{ $t('contact.name') }}</label>
               <input v-model="form.name" required type="text"
                      class="w-full px-4 py-3 bg-maroon-950/60 border border-gold-500/20 rounded-xl
                             text-white placeholder-gray-500 transition-all duration-300
                             focus:outline-none focus:border-gold-400 focus:bg-maroon-950/80
                             focus:shadow-gold hover:border-gold-500/40"
-                     placeholder="Your name" />
+                     :placeholder="$t('contact.namePlaceholder')" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+              <label class="block text-sm font-medium text-gray-300 mb-2">{{ $t('contact.email') }}</label>
               <input v-model="form.email" required type="email"
                      class="w-full px-4 py-3 bg-maroon-950/60 border border-gold-500/20 rounded-xl
                             text-white placeholder-gray-500 transition-all duration-300
@@ -154,23 +157,23 @@ async function handleSubmit() {
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Subject</label>
+            <label class="block text-sm font-medium text-gray-300 mb-2">{{ $t('contact.subject') }}</label>
             <input v-model="form.subject" required type="text"
                    class="w-full px-4 py-3 bg-maroon-950/60 border border-gold-500/20 rounded-xl
                           text-white placeholder-gray-500 transition-all duration-300
                           focus:outline-none focus:border-gold-400 focus:bg-maroon-950/80
                           focus:shadow-gold hover:border-gold-500/40"
-                   placeholder="How can we help?" />
+                   :placeholder="$t('contact.subjectPlaceholder')" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Message</label>
+            <label class="block text-sm font-medium text-gray-300 mb-2">{{ $t('contact.message') }}</label>
             <textarea v-model="form.message" required rows="5"
                       class="w-full px-4 py-3 bg-maroon-950/60 border border-gold-500/20 rounded-xl
                              text-white placeholder-gray-500 transition-all duration-300 resize-none
                              focus:outline-none focus:border-gold-400 focus:bg-maroon-950/80
                              focus:shadow-gold hover:border-gold-500/40"
-                      placeholder="Your message..."></textarea>
+                      :placeholder="$t('contact.messagePlaceholder')"></textarea>
           </div>
 
           <button type="submit"
@@ -188,10 +191,10 @@ async function handleSubmit() {
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
-                Sending…
+                {{ $t('contact.sending') }}
               </span>
               <span v-else key="send" class="flex items-center gap-2 relative">
-                <Send class="w-4 h-4" /> Send Message
+                <Send class="w-4 h-4" /> {{ $t('contact.send') }}
               </span>
             </transition>
           </button>

@@ -1,9 +1,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/authStore'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { Music2, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Loader2 } from 'lucide-vue-next'
 
+const { t } = useI18n()
 const router = useRouter()
 const route  = useRoute()
 const auth   = useAuthStore()
@@ -21,14 +24,14 @@ const passwordTouched = ref(false)
 
 const emailError = computed(() => {
   if (!emailTouched.value) return ''
-  if (!email.value) return 'Email is required.'
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) return 'Enter a valid email address.'
+  if (!email.value) return t('auth.emailRequired')
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) return t('auth.emailInvalid')
   return ''
 })
 
 const passwordError = computed(() => {
   if (!passwordTouched.value) return ''
-  if (!password.value) return 'Password is required.'
+  if (!password.value) return t('auth.passwordRequired')
   return ''
 })
 
@@ -69,6 +72,10 @@ async function handleSubmit() {
 
     <div class="w-full max-w-md relative z-10">
 
+      <div class="flex justify-end mb-4">
+        <LanguageSwitcher />
+      </div>
+
       <!-- ─── Logo + heading ─── -->
       <div class="text-center mb-8">
         <RouterLink to="/" class="inline-flex flex-col items-center gap-3 group">
@@ -80,8 +87,8 @@ async function handleSubmit() {
           <span class="font-serif text-2xl font-bold gold-shimmer">Resonanz</span>
         </RouterLink>
 
-        <h1 class="mt-5 text-3xl font-bold text-white">Welcome back</h1>
-        <p class="mt-1.5 text-gray-400 text-sm">Sign in to your Resonanz account</p>
+        <h1 class="mt-5 text-3xl font-bold text-white">{{ $t('auth.welcomeBack') }}</h1>
+        <p class="mt-1.5 text-gray-400 text-sm">{{ $t('auth.loginSubtitle') }}</p>
       </div>
 
       <!-- ─── Card ─── -->
@@ -106,7 +113,7 @@ async function handleSubmit() {
           <!-- Email -->
           <div>
             <label for="email" class="block text-sm font-medium text-gray-300 mb-2">
-              Email address
+              {{ $t('auth.email') }}
             </label>
             <div class="relative group">
               <div class="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none
@@ -139,9 +146,9 @@ async function handleSubmit() {
           <!-- Password -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label for="password" class="block text-sm font-medium text-gray-300">Password</label>
+              <label for="password" class="block text-sm font-medium text-gray-300">{{ $t('auth.password') }}</label>
               <a href="#" class="text-xs text-gold-400 hover:text-gold-300 transition-colors">
-                Forgot password?
+                {{ $t('auth.forgot') }}
               </a>
             </div>
             <div class="relative group">
@@ -155,7 +162,7 @@ async function handleSubmit() {
                 v-model="password"
                 :type="showPw ? 'text' : 'password'"
                 autocomplete="current-password"
-                placeholder="Your password"
+                :placeholder="$t('auth.passwordPlaceholder')"
                 @blur="passwordTouched = true"
                 class="w-full pl-10 pr-11 py-3 bg-maroon-950/60 rounded-xl text-white
                        placeholder-gray-500 transition-all duration-300 outline-none
@@ -169,7 +176,7 @@ async function handleSubmit() {
                 @click="showPw = !showPw"
                 class="absolute right-3.5 top-1/2 -translate-y-1/2
                        text-gold-500/50 hover:text-gold-400 transition-colors p-0.5"
-                :aria-label="showPw ? 'Hide password' : 'Show password'"
+                :aria-label="showPw ? $t('auth.hidePw') : $t('auth.showPw')"
               >
                 <EyeOff v-if="showPw" class="w-[18px] h-[18px]" />
                 <Eye    v-else        class="w-[18px] h-[18px]" />
@@ -196,10 +203,10 @@ async function handleSubmit() {
                          transition-transform duration-500 ease-in-out"></span>
             <transition name="icon-swap" mode="out-in">
               <span v-if="loading" key="loading" class="flex items-center gap-2 relative">
-                <Loader2 class="w-4 h-4 animate-spin" /> Signing in…
+                <Loader2 class="w-4 h-4 animate-spin" /> {{ $t('auth.signingIn') }}
               </span>
               <span v-else key="idle" class="flex items-center gap-2 relative">
-                Sign In <ArrowRight class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                {{ $t('auth.signIn') }} <ArrowRight class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </span>
             </transition>
           </button>
@@ -209,7 +216,7 @@ async function handleSubmit() {
         <!-- Divider -->
         <div class="flex items-center gap-3 my-6">
           <div class="flex-1 h-px bg-gold-500/15"></div>
-          <span class="text-xs text-gray-500">New to Resonanz?</span>
+          <span class="text-xs text-gray-500">{{ $t('auth.newHere') }}</span>
           <div class="flex-1 h-px bg-gold-500/15"></div>
         </div>
 
@@ -221,7 +228,7 @@ async function handleSubmit() {
                  hover:bg-gold-500/8 hover:border-gold-500/60 transition-all duration-300
                  btn-magnetic group"
         >
-          Create an account
+          {{ $t('auth.createAccount') }}
           <ArrowRight class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
         </RouterLink>
       </div>
@@ -229,7 +236,7 @@ async function handleSubmit() {
       <!-- Back link -->
       <p class="text-center mt-6 text-sm text-gray-500">
         <RouterLink to="/" class="hover:text-gold-400 transition-colors">
-          ← Back to home
+          {{ $t('auth.backHome') }}
         </RouterLink>
       </p>
 

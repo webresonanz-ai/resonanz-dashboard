@@ -1,8 +1,11 @@
 <script setup>
 import { computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Calendar, ArrowRight, AlertCircle, RefreshCw } from 'lucide-vue-next'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import { useApi } from '@/composables/useApi'
+
+const { locale } = useI18n()
 
 useScrollReveal()
 
@@ -20,7 +23,8 @@ const categoryColor = {
 
 function formatDate(d) {
   if (!d) return ''
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const tag = locale.value === 'id' ? 'id-ID' : 'en-US'
+  return new Date(d).toLocaleDateString(tag, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 </script>
 
@@ -29,9 +33,9 @@ function formatDate(d) {
 
     <!-- ─── Header ─── -->
     <div class="mb-14 reveal">
-      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">Stay Updated</span>
+      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">{{ $t('news.eyebrow') }}</span>
       <h1 class="text-4xl sm:text-5xl font-bold mt-2 mb-4">
-        Latest <span class="gold-text">News</span>
+        {{ $t('news.titleA') }} <span class="gold-text">{{ $t('news.titleHighlight') }}</span>
       </h1>
       <div class="flex items-center gap-3 mb-4">
         <div class="h-px w-12 bg-gold-gradient opacity-50"></div>
@@ -39,7 +43,7 @@ function formatDate(d) {
         <div class="h-px w-24 bg-gold-gradient opacity-30"></div>
       </div>
       <p class="text-gray-400 max-w-2xl">
-        Discover stories, announcements, and highlights from the Resonanz community.
+        {{ $t('news.subtitle') }}
       </p>
     </div>
 
@@ -67,13 +71,13 @@ function formatDate(d) {
       <button @click="fetch"
               class="inline-flex items-center gap-2 px-5 py-2.5 bg-gold-gradient text-maroon-950
                      font-semibold rounded-xl text-sm btn-magnetic">
-        <RefreshCw class="w-4 h-4" /> Retry
+        <RefreshCw class="w-4 h-4" /> {{ $t('common.retry') }}
       </button>
     </div>
 
     <!-- ─── Empty ─── -->
     <div v-else-if="!news.length" class="glass-card p-16 text-center">
-      <p class="text-gray-500">No news articles published yet.</p>
+      <p class="text-gray-500">{{ $t('news.empty') }}</p>
     </div>
 
     <!-- ─── Grid ─── -->
@@ -109,7 +113,7 @@ function formatDate(d) {
         <div class="mt-5 pt-5 border-t border-gold-500/10 group-hover:border-gold-500/25 transition-colors">
           <button class="inline-flex items-center gap-2 text-gold-400 text-sm font-medium
                          group-hover:gap-3 transition-all duration-300 group/btn">
-            Read More
+            {{ $t('common.readMore') }}
             <ArrowRight class="w-4 h-4 group-hover/btn:translate-x-1 transition-transform duration-200" />
           </button>
         </div>

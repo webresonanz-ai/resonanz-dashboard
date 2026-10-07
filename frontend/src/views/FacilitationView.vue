@@ -26,9 +26,9 @@ function resolveIcon(name) {
 
     <!-- ─── Header ─── -->
     <div class="mb-14 reveal">
-      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">Our Spaces</span>
+      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">{{ $t('facilities.eyebrow') }}</span>
       <h1 class="text-4xl sm:text-5xl font-bold mt-2 mb-4">
-        World-Class <span class="gold-text">Facilities</span>
+        {{ $t('facilities.titleA') }} <span class="gold-text">{{ $t('facilities.titleHighlight') }}</span>
       </h1>
       <div class="flex items-center gap-3 mb-4">
         <div class="h-px w-12 bg-gold-gradient opacity-50"></div>
@@ -36,7 +36,7 @@ function resolveIcon(name) {
         <div class="h-px w-24 bg-gold-gradient opacity-30"></div>
       </div>
       <p class="text-gray-400 max-w-2xl">
-        Every space at Resonanz is designed to inspire, from intimate practice rooms to our iconic concert hall.
+        {{ $t('facilities.subtitle') }}
       </p>
     </div>
 
@@ -60,13 +60,13 @@ function resolveIcon(name) {
       <button @click="fetch"
               class="inline-flex items-center gap-2 px-5 py-2.5 bg-gold-gradient text-maroon-950
                      font-semibold rounded-xl text-sm btn-magnetic">
-        <RefreshCw class="w-4 h-4" /> Retry
+        <RefreshCw class="w-4 h-4" /> {{ $t('common.retry') }}
       </button>
     </div>
 
     <!-- ─── Empty ─── -->
     <div v-else-if="!facilities.length" class="glass-card p-16 text-center">
-      <p class="text-gray-500">No facilities listed yet.</p>
+      <p class="text-gray-500">{{ $t('facilities.empty') }}</p>
     </div>
 
     <!-- ─── Grid ─── -->

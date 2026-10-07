@@ -1,10 +1,14 @@
 <script setup>
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { computed } from 'vue'
 import { useAppStore } from '@/stores/appStore'
 import { useAuthStore } from '@/stores/authStore'
+import LanguageSwitcher from './LanguageSwitcher.vue'
 import { Menu, X, Music2, LayoutDashboard, LogOut, ChevronDown } from 'lucide-vue-next'
 import { watch, ref, onMounted, onUnmounted } from 'vue'
 
+const { t } = useI18n()
 const store    = useAppStore()
 const auth     = useAuthStore()
 const route    = useRoute()
@@ -12,16 +16,16 @@ const router   = useRouter()
 const scrolled = ref(false)
 const userMenuOpen = ref(false)
 
-const navLinks = [
-  { name: 'Home', path: '/' },
-  { name: 'Schedule', path: '/schedule' },
-  { name: 'Event', path: '/event' },
-  { name: 'News', path: '/news' },
-  { name: 'Courses & Fee', path: '/courses' },
-  { name: 'Facilitation', path: '/facilitation' },
-  { name: 'Teachers', path: '/teachers' },
-  { name: 'Contact', path: '/contact' },
-]
+const navLinks = computed(() => [
+  { name: t('nav.home'), path: '/' },
+  { name: t('nav.schedule'), path: '/schedule' },
+  { name: t('nav.event'), path: '/event' },
+  { name: t('nav.news'), path: '/news' },
+  { name: t('nav.courses'), path: '/courses' },
+  { name: t('nav.facilitation'), path: '/facilitation' },
+  { name: t('nav.teachers'), path: '/teachers' },
+  { name: t('nav.contact'), path: '/contact' },
+])
 
 watch(() => route.path, () => {
   store.closeMobileMenu()
@@ -110,6 +114,7 @@ async function handleLogout() {
 
         <!-- ─── Right side: auth CTA or user menu ─── -->
         <div class="flex items-center gap-3">
+          <LanguageSwitcher class="hidden sm:block" />
 
           <!-- Guest: Join Us -->
           <template v-if="!auth.isAuthenticated">
@@ -119,7 +124,7 @@ async function handleLogout() {
                      text-gold-400 border border-gold-500/30 rounded-lg
                      hover:bg-gold-500/10 hover:border-gold-500/60 transition-all duration-300"
             >
-              Sign In
+              {{ $t('nav.signIn') }}
             </RouterLink>
             <RouterLink
               to="/register"
@@ -132,7 +137,7 @@ async function handleLogout() {
                        bg-gradient-to-r from-transparent via-white/25 to-transparent
                        transition-transform duration-600 ease-in-out"
               ></span>
-              <span class="relative">Join Us</span>
+              <span class="relative">{{ $t('nav.joinUs') }}</span>
             </RouterLink>
           </template>
 
@@ -188,7 +193,7 @@ async function handleLogout() {
                     <LayoutDashboard
                       class="w-4 h-4 text-gold-400/60 group-hover:text-gold-400 transition-colors"
                     />
-                    Dashboard
+                    {{ $t('nav.dashboard') }}
                   </RouterLink>
 
                   <button
@@ -200,7 +205,7 @@ async function handleLogout() {
                     <LogOut
                       class="w-4 h-4 text-gray-500 group-hover:text-red-400 transition-colors"
                     />
-                    Sign Out
+                    {{ $t('nav.signOut') }}
                   </button>
                 </div>
               </transition>
@@ -212,7 +217,7 @@ async function handleLogout() {
             @click="store.toggleMobileMenu"
             class="lg:hidden p-2 rounded-lg text-gold-400 hover:bg-gold-500/10
                    transition-all active:scale-90"
-            aria-label="Toggle menu"
+            :aria-label="$t('nav.toggleMenu')"
           >
             <transition name="icon-swap" mode="out-in">
               <X    v-if="store.isMobileMenuOpen" class="w-6 h-6" key="x" />
@@ -246,16 +251,19 @@ async function handleLogout() {
 
           <!-- Mobile auth section -->
           <div class="pt-3 border-t border-gold-500/15 mt-2 space-y-1">
+            <div class="px-4 py-2 sm:hidden">
+              <LanguageSwitcher />
+            </div>
             <template v-if="!auth.isAuthenticated">
               <RouterLink to="/login"
                 class="block px-4 py-3 rounded-lg text-sm font-medium text-gray-300
                        hover:bg-gold-500/5 hover:text-gold-400 transition-all">
-                Sign In
+                {{ $t('nav.signIn') }}
               </RouterLink>
               <RouterLink to="/register"
                 class="block px-4 py-3 bg-gold-gradient text-maroon-950 font-semibold
                        text-sm rounded-lg text-center shadow-gold">
-                Create Account
+                {{ $t('nav.createAccount') }}
               </RouterLink>
             </template>
             <template v-else>
@@ -272,13 +280,13 @@ async function handleLogout() {
               <RouterLink to="/dashboard"
                 class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-gray-300
                        hover:bg-gold-500/5 hover:text-gold-400 transition-all">
-                <LayoutDashboard class="w-4 h-4 text-gold-400/60" /> Dashboard
+                <LayoutDashboard class="w-4 h-4 text-gold-400/60" /> {{ $t('nav.dashboard') }}
               </RouterLink>
               <button
                 @click="handleLogout"
                 class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm
                        text-red-400/80 hover:bg-red-500/8 hover:text-red-400 transition-all text-left">
-                <LogOut class="w-4 h-4" /> Sign Out
+                <LogOut class="w-4 h-4" /> {{ $t('nav.signOut') }}
               </button>
             </template>
           </div>

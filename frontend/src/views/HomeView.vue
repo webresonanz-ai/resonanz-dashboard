@@ -1,9 +1,12 @@
 <script setup>
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { Music, Award, Users, Calendar, ArrowRight, Sparkles } from 'lucide-vue-next'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import { useApi } from '@/composables/useApi'
 import { ref, computed, onMounted } from 'vue'
+
+const { t } = useI18n()
 
 useScrollReveal()
 
@@ -14,17 +17,17 @@ onMounted(() => { fetchEvents(); fetchTeachers() })
 
 // Stats: event count is driven by API; others are fixed brand values
 const stats = computed(() => [
-  { label: 'Students', value: 500,                              suffix: '+', icon: Users    },
-  { label: 'Events',   value: eventsData.value?.length ?? 120,  suffix: '+', icon: Music    },
-  { label: 'Awards',   value: 45,                              suffix: '',  icon: Award    },
-  { label: 'Faculty',  value: teachersData.value?.length ?? 25, suffix: '',  icon: Calendar },
+  { label: t('home.stats.students'), value: 500,                              suffix: '+', icon: Users    },
+  { label: t('home.stats.events'),   value: eventsData.value?.length ?? 120,  suffix: '+', icon: Music    },
+  { label: t('home.stats.awards'),   value: 45,                              suffix: '',  icon: Award    },
+  { label: t('home.stats.faculty'),  value: teachersData.value?.length ?? 25, suffix: '',  icon: Calendar },
 ])
 
-const features = [
-  { title: 'World-Class Faculty',         desc: 'Learn from internationally acclaimed musicians and educators.',    icon: Award },
-  { title: 'Performance Opportunities',   desc: 'Regular events and recitals in prestigious venues.',              icon: Music },
-  { title: 'Personalized Learning',       desc: 'One-on-one lessons tailored to your musical journey.',             icon: Users },
-]
+const features = computed(() => [
+  { title: t('home.features.0.title'), desc: t('home.features.0.desc'), icon: Award },
+  { title: t('home.features.1.title'), desc: t('home.features.1.desc'), icon: Music },
+  { title: t('home.features.2.title'), desc: t('home.features.2.desc'), icon: Users },
+])
 
 // ─── Animated counter ────────────────────────────────────────
 const displayStats = ref([0, 0, 0, 0])
@@ -83,18 +86,16 @@ onMounted(() => {
                         bg-gold-500/10 border border-gold-500/30 text-gold-400
                         text-xs font-medium tracking-wider uppercase mb-6">
               <span class="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse"></span>
-              Est. 2000 · Excellence in Music
+              {{ $t('home.badge') }}
             </div>
 
             <h1 class="reveal delay-100 text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-              Where <span class="gold-shimmer">Harmony</span><br />
-              Meets Excellence
+              {{ $t('home.titleA') }} <span class="gold-shimmer">{{ $t('home.titleHighlight') }}</span><br />
+              {{ $t('home.titleB') }}
             </h1>
 
             <p class="reveal delay-200 text-lg text-gray-300 leading-relaxed mb-8 max-w-xl">
-              Resonanz Music Foundation nurtures the next generation of musicians through
-              world-class education, immersive performance experiences, and a community
-              bound by the love of music.
+              {{ $t('home.subtitle') }}
             </p>
 
             <div class="reveal delay-300 flex flex-wrap gap-4">
@@ -104,7 +105,7 @@ onMounted(() => {
                 <span class="absolute inset-0 -translate-x-full group-hover:translate-x-full
                              bg-gradient-to-r from-transparent via-white/30 to-transparent
                              transition-transform duration-500 ease-in-out"></span>
-                <span class="relative">Explore Courses</span>
+                <span class="relative">{{ $t('home.exploreCourses') }}</span>
                 <ArrowRight class="w-4 h-4 relative group-hover:translate-x-1 transition-transform" />
               </RouterLink>
 
@@ -113,7 +114,7 @@ onMounted(() => {
                        text-gold-400 font-semibold rounded-xl transition-all duration-300
                        hover:bg-gold-500/10 hover:border-gold-500/70 hover:scale-105 hover:shadow-gold group">
                 <Sparkles class="w-4 h-4 group-hover:text-gold-300 transition-colors" />
-                Upcoming Events
+                {{ $t('home.upcomingEvents') }}
               </RouterLink>
             </div>
           </div>
@@ -129,7 +130,7 @@ onMounted(() => {
                 </div>
                 <div>
                   <p class="text-2xl font-bold gold-text font-serif">45+</p>
-                  <p class="text-xs text-gray-400">Awards Won</p>
+                  <p class="text-xs text-gray-400">{{ $t('home.awardsWon') }}</p>
                 </div>
               </div>
             </div>
@@ -145,7 +146,7 @@ onMounted(() => {
                   {{ ['ER','HT','AO'][n-1] }}
                 </div>
               </div>
-              <span class="text-xs text-gray-300 font-medium">500+ Students</span>
+              <span class="text-xs text-gray-300 font-medium">{{ $t('home.studentsBadge') }}</span>
             </div>
 
             <!-- Main card -->
@@ -207,10 +208,10 @@ onMounted(() => {
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="reveal text-center max-w-2xl mx-auto mb-16">
           <span class="text-gold-400 text-sm font-medium tracking-widest uppercase block mb-3">
-            Why Choose Us
+            {{ $t('home.whyEyebrow') }}
           </span>
           <h2 class="text-3xl sm:text-4xl font-bold mb-4">
-            Why Choose <span class="gold-text">Resonanz</span>
+            {{ $t('home.whyTitleA') }} <span class="gold-text">Resonanz</span>
           </h2>
           <div class="flex items-center justify-center gap-3 mt-5">
             <div class="h-px w-16 bg-gold-gradient opacity-60"></div>
@@ -218,7 +219,7 @@ onMounted(() => {
             <div class="h-px w-16 bg-gold-gradient opacity-60"></div>
           </div>
           <p class="text-gray-400 mt-5">
-            A holistic musical education designed to develop both technical mastery and artistic expression.
+            {{ $t('home.whySubtitle') }}
           </p>
         </div>
 
@@ -268,11 +269,10 @@ onMounted(() => {
               <div class="h-px w-12 bg-gold-gradient opacity-50"></div>
             </div>
             <h2 class="text-3xl sm:text-4xl font-bold mb-4">
-              Begin Your <span class="gold-text">Musical Journey</span>
+              {{ $t('home.ctaTitleA') }} <span class="gold-text">{{ $t('home.ctaTitleHighlight') }}</span>
             </h2>
             <p class="text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Join a community of passionate musicians and unlock your full potential
-              with personalized mentorship from world-class faculty.
+              {{ $t('home.ctaSubtitle') }}
             </p>
             <RouterLink to="/contact"
               class="inline-flex items-center gap-2 px-10 py-4 bg-gold-gradient text-maroon-950
@@ -280,7 +280,7 @@ onMounted(() => {
               <span class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full
                            bg-gradient-to-r from-transparent via-white/30 to-transparent
                            transition-transform duration-500"></span>
-              <span class="relative">Get Started Today</span>
+              <span class="relative">{{ $t('home.ctaButton') }}</span>
               <ArrowRight class="w-5 h-5 relative group-hover/btn:translate-x-1 transition-transform" />
             </RouterLink>
           </div>

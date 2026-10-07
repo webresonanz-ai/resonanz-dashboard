@@ -28,9 +28,9 @@ const schedule = computed(() => data.value ?? [])
 
     <!-- ─── Header ─── -->
     <div class="mb-14 reveal">
-      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">Weekly Timetable</span>
+      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">{{ $t('schedule.eyebrow') }}</span>
       <h1 class="text-4xl sm:text-5xl font-bold mt-2 mb-4">
-        Class <span class="gold-text">Schedule</span>
+        {{ $t('schedule.titleA') }} <span class="gold-text">{{ $t('schedule.titleHighlight') }}</span>
       </h1>
       <div class="flex items-center gap-3 mb-4">
         <div class="h-px w-12 bg-gold-gradient opacity-50"></div>
@@ -38,7 +38,7 @@ const schedule = computed(() => data.value ?? [])
         <div class="h-px w-24 bg-gold-gradient opacity-30"></div>
       </div>
       <p class="text-gray-400 max-w-2xl">
-        Plan your week with our comprehensive schedule of classes, masterclasses, and ensemble rehearsals.
+        {{ $t('schedule.subtitle') }}
       </p>
     </div>
 
@@ -69,14 +69,14 @@ const schedule = computed(() => data.value ?? [])
       <button @click="fetch"
               class="inline-flex items-center gap-2 px-5 py-2.5 bg-gold-gradient text-maroon-950
                      font-semibold rounded-xl text-sm btn-magnetic">
-        <RefreshCw class="w-4 h-4" /> Retry
+        <RefreshCw class="w-4 h-4" /> {{ $t('common.retry') }}
       </button>
     </div>
 
     <!-- ─── Empty state ─── -->
     <div v-else-if="!schedule.length"
          class="glass-card p-16 text-center">
-      <p class="text-gray-500">No schedule available yet. Check back soon!</p>
+      <p class="text-gray-500">{{ $t('schedule.empty') }}</p>
     </div>
 
     <!-- ─── Data ─── -->
@@ -102,7 +102,7 @@ const schedule = computed(() => data.value ?? [])
               <p class="text-gold-400 font-serif text-xl font-bold group-hover:text-gold-300 transition-colors">
                 {{ item.day }}
               </p>
-              <p class="text-xs text-gold-500/50 font-medium uppercase tracking-widest">Day {{ i + 1 }}</p>
+              <p class="text-xs text-gold-500/50 font-medium uppercase tracking-widest">{{ $t('schedule.dayLabel') }} {{ i + 1 }}</p>
             </div>
           </div>
 

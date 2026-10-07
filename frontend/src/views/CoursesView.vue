@@ -32,9 +32,9 @@ function getFeatures(raw) {
 
     <!-- ─── Header ─── -->
     <div class="mb-14 reveal text-center">
-      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">Programs</span>
+      <span class="text-gold-400 text-sm font-medium tracking-widest uppercase">{{ $t('courses.eyebrow') }}</span>
       <h1 class="text-4xl sm:text-5xl font-bold mt-2 mb-4">
-        Courses & <span class="gold-text">Fees</span>
+        {{ $t('courses.titleA') }} <span class="gold-text">{{ $t('courses.titleHighlight') }}</span>
       </h1>
       <div class="flex items-center justify-center gap-3 mb-4">
         <div class="h-px w-12 bg-gold-gradient opacity-50"></div>
@@ -42,7 +42,7 @@ function getFeatures(raw) {
         <div class="h-px w-12 bg-gold-gradient opacity-50"></div>
       </div>
       <p class="text-gray-400 max-w-2xl mx-auto">
-        Choose from flexible programs designed for every level of musical ambition.
+        {{ $t('courses.subtitle') }}
       </p>
     </div>
 
@@ -68,13 +68,13 @@ function getFeatures(raw) {
       <button @click="fetch"
               class="inline-flex items-center gap-2 px-5 py-2.5 bg-gold-gradient text-maroon-950
                      font-semibold rounded-xl text-sm btn-magnetic">
-        <RefreshCw class="w-4 h-4" /> Retry
+        <RefreshCw class="w-4 h-4" /> {{ $t('common.retry') }}
       </button>
     </div>
 
     <!-- ─── Empty ─── -->
     <div v-else-if="!courses.length" class="glass-card p-16 text-center">
-      <p class="text-gray-500">No courses available at the moment.</p>
+      <p class="text-gray-500">{{ $t('courses.empty') }}</p>
     </div>
 
     <!-- ─── Cards ─── -->
@@ -96,7 +96,7 @@ function getFeatures(raw) {
                     px-4 py-1 bg-gold-gradient text-maroon-950 text-xs font-bold rounded-full
                     shadow-gold glow-pulse">
           <Sparkles class="w-3 h-3" />
-          MOST POPULAR
+          {{ $t('courses.mostPopular') }}
         </div>
 
         <!-- Decorative corner for featured -->
@@ -108,7 +108,7 @@ function getFeatures(raw) {
         <h3 class="text-2xl font-serif font-bold text-white mb-1 group-hover:text-gold-200 transition-colors">
           {{ course.name }}
         </h3>
-        <p class="text-sm text-gray-400 mb-6">Level: {{ course.level }}</p>
+        <p class="text-sm text-gray-400 mb-6">{{ $t('courses.level') }}: {{ course.level }}</p>
 
         <!-- Price -->
         <div class="flex items-baseline gap-2 mb-6">
@@ -125,7 +125,7 @@ function getFeatures(raw) {
             <Users class="w-4 h-4 text-gold-400" /> {{ course.class_size }}
           </div>
           <div class="flex items-center gap-2 text-sm text-gray-300">
-            <Award class="w-4 h-4 text-gold-400" /> Certificate on completion
+            <Award class="w-4 h-4 text-gold-400" /> {{ $t('courses.certificate') }}
           </div>
         </div>
 
@@ -158,7 +158,7 @@ function getFeatures(raw) {
                 class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full
                        bg-gradient-to-r from-transparent via-white/25 to-transparent
                        transition-transform duration-500"></span>
-          <span class="relative">Enroll Now</span>
+          <span class="relative">{{ $t('courses.enrollNow') }}</span>
         </RouterLink>
       </div>
     </div>
@@ -166,13 +166,13 @@ function getFeatures(raw) {
     <!-- Financial aid notice -->
     <div class="mt-14 reveal-scale glass-card p-6 text-center delay-300">
       <p class="text-gray-300">
-        <span class="gold-text font-semibold">Financial aid available.</span>
-        We believe music education should be accessible to all.
+        <span class="gold-text font-semibold">{{ $t('courses.aidHighlight') }}</span>
+        {{ $t('courses.aidText') }}
         <RouterLink to="/contact"
                     class="text-gold-400 hover:text-gold-300 underline underline-offset-2 ml-1 transition-colors">
-          Contact us
+          {{ $t('common.contactUs') }}
         </RouterLink>
-        to learn about scholarships.
+        {{ $t('courses.aidCta') }}
       </p>
     </div>
 
