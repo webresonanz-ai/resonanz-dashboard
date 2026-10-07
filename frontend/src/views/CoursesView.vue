@@ -1,7 +1,7 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Clock, Users, Award, Check, Sparkles, AlertCircle, RefreshCw } from 'lucide-vue-next'
+import { Clock, Users, Award, Check, Sparkles, AlertCircle, RefreshCw, DollarSign, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import { useApi } from '@/composables/useApi'
 
@@ -12,10 +12,43 @@ onMounted(fetch)
 
 const courses = computed(() => data.value ?? [])
 
+// ─── Carousel: kicks in when there are more than 3 courses ──
+const track = ref(null)
+const showCarousel = computed(() => courses.value.length > 3)
+
+function scrollCourses(dir) {
+  const el = track.value
+  if (!el) return
+  const firstCard = el.querySelector(':scope > div')
+  const step = (firstCard?.offsetWidth ?? 380) + 24 // card width + gap
+  el.scrollBy({ left: dir * step, behavior: 'smooth' })
+}
+
+// ─── Currency (prices stored in IDR; USD converted at a fixed rate) ──
+const USD_TO_IDR = 16500
+const CURRENCY_KEY = 'resonanz-currency'
+const currency = ref('IDR')
+try {
+  const saved = localStorage.getItem(CURRENCY_KEY)
+  if (saved === 'USD' || saved === 'IDR') currency.value = saved
+} catch { /* ignore */ }
+
+function setCurrency(c) {
+  currency.value = c
+  try { localStorage.setItem(CURRENCY_KEY, c) } catch { /* ignore */ }
+}
+
+const idrFormatter = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 })
+
 function formatPrice(p) {
-  if (p === undefined || p === null) return '$0'
+  if (p === undefined || p === null) return currency.value === 'USD' ? '$0' : 'Rp0'
   const n = parseFloat(p)
-  return Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`
+  if (Number.isNaN(n)) return currency.value === 'USD' ? '$0' : 'Rp0'
+  if (currency.value === 'USD') {
+    const usd = n / USD_TO_IDR
+    return Number.isInteger(usd) ? `$${usd}` : `$${usd.toFixed(2)}`
+  }
+  return `Rp${idrFormatter.format(Math.round(n))}`
 }
 
 function getFeatures(raw) {
@@ -44,6 +77,22 @@ function getFeatures(raw) {
       <p class="text-gray-400 max-w-2xl mx-auto">
         {{ $t('courses.subtitle') }}
       </p>
+
+      <!-- Currency switcher -->
+      <div class="mt-6 inline-flex items-center gap-1 p-1 rounded-full glass-card !py-1 !px-1">
+        <DollarSign class="w-4 h-4 text-gold-400 ml-2" />
+        <button
+          v-for="c in ['USD', 'IDR']"
+          :key="c"
+          @click="setCurrency(c)"
+          class="px-4 py-1.5 rounded-full text-sm font-semibold transition-all"
+          :class="currency === c
+            ? 'bg-gold-gradient text-maroon-950 shadow-gold'
+            : 'text-gray-400 hover:text-gold-300'"
+        >
+          {{ c }}
+        </button>
+      </div>
     </div>
 
     <!-- ─── Loading ─── -->
@@ -78,16 +127,41 @@ function getFeatures(raw) {
     </div>
 
     <!-- ─── Cards ─── -->
-    <div v-else class="grid md:grid-cols-3 gap-6 items-start">
+    <div v-else>
+      <!-- Carousel controls (only when more than 3 courses) -->
+      <div v-if="showCarousel" class="flex items-center justify-end gap-2 mb-4">
+        <span class="text-xs text-gray-500 mr-1">{{ $t('courses.scrollHint') }}</span>
+        <button @click="scrollCourses(-1)" aria-label="Previous"
+                class="w-10 h-10 rounded-full border border-gold-500/40 text-gold-400
+                       flex items-center justify-center hover:bg-gold-500/10 transition-colors">
+          <ChevronLeft class="w-5 h-5" />
+        </button>
+        <button @click="scrollCourses(1)" aria-label="Next"
+                class="w-10 h-10 rounded-full border border-gold-500/40 text-gold-400
+                       flex items-center justify-center hover:bg-gold-500/10 transition-colors">
+          <ChevronRight class="w-5 h-5" />
+        </button>
+      </div>
+
+      <div
+        ref="track"
+        :class="showCarousel
+          ? 'course-track flex gap-6 overflow-x-auto snap-x snap-mandatory pt-5 pb-4 px-1'
+          : 'grid md:grid-cols-3 gap-6 items-start'"
+      >
       <div
         v-for="(course, i) in courses"
         :key="course.id"
         class="reveal glass-card p-8 relative transition-all duration-500 group"
         :class="[
           course.is_featured
-            ? 'border-gold-500/60 shadow-gold-lg md:-translate-y-6 hover:shadow-gold-lg animated-border'
+            ? 'border-gold-500/60 shadow-gold-lg hover:shadow-gold-lg animated-border'
             : 'hover:border-gold-500/40 card-lift',
-          `delay-${(i + 1) * 100}`
+          showCarousel
+            ? 'shrink-0 snap-start min-w-[85%] sm:min-w-[360px] sm:max-w-[360px]'
+            : '',
+          `delay-${(i + 1) * 100}`,
+          !showCarousel && course.is_featured ? 'md:-translate-y-6' : '',
         ]"
       >
         <!-- Most popular badge -->
@@ -161,6 +235,7 @@ function getFeatures(raw) {
           <span class="relative">{{ $t('courses.enrollNow') }}</span>
         </RouterLink>
       </div>
+      </div>
     </div>
 
     <!-- Financial aid notice -->
@@ -181,4 +256,8 @@ function getFeatures(raw) {
 
 <style scoped>
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.course-track { scrollbar-width: thin; scrollbar-color: rgba(212, 175, 55, 0.4) transparent; }
+.course-track::-webkit-scrollbar { height: 6px; }
+.course-track::-webkit-scrollbar-track { background: transparent; }
+.course-track::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.4); border-radius: 999px; }
 </style>

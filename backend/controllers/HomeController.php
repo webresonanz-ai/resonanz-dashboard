@@ -54,6 +54,8 @@ class HomeController
         'stat_awards_value',
         'hero_background_image',
         'hero_side_image',
+        'site_font_family',
+        'site_font_url',
     ];
 
     /** JSON-encoded keys (stored in value_en) */

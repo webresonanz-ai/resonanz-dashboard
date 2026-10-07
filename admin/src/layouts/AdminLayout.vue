@@ -4,7 +4,7 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import {
   LayoutDashboard, Calendar, Music, Newspaper, BookOpen,
-  Building2, Users, Mail, LogOut, Menu, X, Music2, ChevronRight, House,
+  Building2, Users, Mail, LogOut, Menu, X, Music2, ChevronRight, House, Type,
 } from 'lucide-vue-next'
 
 const auth   = useAuthStore()
@@ -22,6 +22,7 @@ const nav = [
   { name: 'Facilities',   to: '/facilities', icon: Building2 },
   { name: 'Teachers',     to: '/teachers',   icon: Users },
   { name: 'Contact',      to: '/contact',    icon: Mail },
+  { name: 'Fonts',        to: '/fonts',      icon: Type },
 ]
 
 const pageTitle = computed(() => nav.find(n => n.to === route.path)?.name ?? 'Admin')

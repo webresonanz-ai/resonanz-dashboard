@@ -19,6 +19,7 @@ const router = createRouter({
         { path: 'facilities',name: 'facilities',   component: () => import('@/views/FacilitiesView.vue') },
         { path: 'teachers',  name: 'teachers',     component: () => import('@/views/TeachersView.vue') },
         { path: 'contact',   name: 'contact',      component: () => import('@/views/ContactView.vue') },
+        { path: 'fonts',     name: 'fonts',        component: () => import('@/views/FontsView.vue') },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },

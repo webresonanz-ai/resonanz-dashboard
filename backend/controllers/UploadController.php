@@ -8,19 +8,44 @@ use Core\Request;
 use Core\Response;
 
 /**
- * UploadController — handles admin image uploads.
+ * UploadController — handles admin image & font uploads.
  *
- * POST /api/admin/uploads  (multipart/form-data, field: "image", optional field: "folder" = events|home|facilities)
- * Returns: { url: "/uploads/events/xxx.jpg" }
+ * POST /api/admin/uploads  (multipart/form-data)
+ *   Images: field "image", optional "folder" = events|home|facilities
+ *           → { url: "/uploads/events/xxx.jpg" }
+ *   Fonts:  field "font", "folder" = fonts  (.ttf/.otf/.woff/.woff2, max 10 MB)
+ *           → { url: "/uploads/fonts/font_xxx.ttf" }
  */
 class UploadController
 {
-    private const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
-    private const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-    private const ALLOWED_FOLDERS = ['events' => 'event_', 'home' => 'home_', 'facilities' => 'facility_'];
+    private const MAX_IMAGE_BYTES = 5 * 1024 * 1024;  // 5 MB
+    private const MAX_FONT_BYTES  = 10 * 1024 * 1024; // 10 MB
+    private const ALLOWED_IMG_EXT = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    private const ALLOWED_FONT_EXT = ['ttf', 'otf', 'woff', 'woff2'];
+    private const ALLOWED_FOLDERS = ['events' => 'event_', 'home' => 'home_', 'facilities' => 'facility_', 'fonts' => 'font_'];
+
+    /** Magic-byte signatures per font extension */
+    private const FONT_MAGIC = [
+        'ttf'   => ["\x00\x01\x00\x00", 'true', 'typ1'],
+        'otf'   => ['OTTO'],
+        'woff'  => ['wOFF'],
+        'woff2' => ['wOF2'],
+    ];
 
     public function store(Request $req, Response $res): void
     {
+        // Target subfolder first (fonts = font files, anything else = images)
+        $folder = strtolower(trim((string) ($req->input('folder') ?? 'events')));
+        if (!array_key_exists($folder, self::ALLOWED_FOLDERS)) {
+            $res->error('Invalid folder. Allowed: events, home, facilities, fonts.', 422);
+            return;
+        }
+
+        if ($folder === 'fonts') {
+            $this->storeFont($req, $res);
+            return;
+        }
+
         $file = $req->file('image');
 
         if (!$file) {
@@ -34,14 +59,14 @@ class UploadController
             return;
         }
 
-        if (($file['size'] ?? 0) > self::MAX_BYTES) {
+        if (($file['size'] ?? 0) > self::MAX_IMAGE_BYTES) {
             $res->error('Image too large. Max 5 MB.', 422);
             return;
         }
 
         $origName = (string) ($file['name'] ?? 'upload');
         $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
-        if (!in_array($ext, self::ALLOWED_EXT, true)) {
+        if (!in_array($ext, self::ALLOWED_IMG_EXT, true)) {
             $res->error('Invalid image type. Allowed: jpg, jpeg, png, webp, gif.', 422);
             return;
         }
@@ -58,12 +83,7 @@ class UploadController
             return;
         }
 
-        // Target subfolder (events = default)
-        $folder = strtolower(trim((string) ($req->input('folder') ?? 'events')));
-        if (!array_key_exists($folder, self::ALLOWED_FOLDERS)) {
-            $res->error('Invalid folder. Allowed: events, home, facilities.', 422);
-            return;
-        }
+        // Target subfolder was validated at the top of store()
         $prefix = self::ALLOWED_FOLDERS[$folder];
 
         $dir = __DIR__ . '/../public/uploads/' . $folder;
@@ -84,6 +104,77 @@ class UploadController
         }
 
         $res->success(['url' => '/uploads/' . $folder . '/' . $name], 'Uploaded successfully.', 201);
+    }
+
+    /**
+     * Font upload branch: field "font", folder "fonts".
+     * Accepts .ttf/.otf/.woff/.woff2 (max 10 MB), verified by magic bytes.
+     */
+    private function storeFont(Request $req, Response $res): void
+    {
+        $file = $req->file('font');
+
+        if (!$file) {
+            $res->error('No font file provided. Send multipart/form-data with field "font" and folder "fonts".', 422);
+            return;
+        }
+
+        $err = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+        if ($err !== UPLOAD_ERR_OK) {
+            $res->error($this->uploadErrorMessage($err), 422);
+            return;
+        }
+
+        if (($file['size'] ?? 0) > self::MAX_FONT_BYTES) {
+            $res->error('Font too large. Max 10 MB.', 422);
+            return;
+        }
+
+        $origName = (string) ($file['name'] ?? 'font');
+        $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+        if (!in_array($ext, self::ALLOWED_FONT_EXT, true)) {
+            $res->error('Invalid font type. Allowed: ttf, otf, woff, woff2.', 422);
+            return;
+        }
+
+        $tmp = (string) ($file['tmp_name'] ?? '');
+        if ($tmp === '' || !is_uploaded_file($tmp)) {
+            $res->error('Invalid upload.', 422);
+            return;
+        }
+
+        // Verify magic bytes match the claimed font format
+        $head = @file_get_contents($tmp, false, null, 0, 4);
+        $valid = false;
+        foreach (self::FONT_MAGIC[$ext] ?? [] as $sig) {
+            if ($head !== false && substr($head, 0, strlen($sig)) === $sig) {
+                $valid = true;
+                break;
+            }
+        }
+        if (!$valid) {
+            $res->error('Uploaded file is not a valid font file.', 422);
+            return;
+        }
+
+        $dir = __DIR__ . '/../public/uploads/fonts';
+        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+            $res->error('Could not create upload directory.', 500);
+            return;
+        }
+
+        try {
+            $name = 'font_' . date('Ymd_His') . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+        } catch (\Throwable) {
+            $name = 'font_' . date('Ymd_His') . '_' . uniqid() . '.' . $ext;
+        }
+
+        if (!move_uploaded_file($tmp, $dir . '/' . $name)) {
+            $res->error('Could not save uploaded font.', 500);
+            return;
+        }
+
+        $res->success(['url' => '/uploads/fonts/' . $name], 'Font uploaded successfully.', 201);
     }
 
     private function uploadErrorMessage(int $code): string

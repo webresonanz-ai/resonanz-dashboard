@@ -51,7 +51,13 @@ set_exception_handler(function (Throwable $e) use ($debug): void {
         $real = realpath($file);
         $base = realpath(__DIR__ . '/uploads');
         if ($real !== false && $base !== false && str_starts_with($real, $base) && is_file($real)) {
-            $mime = mime_content_type($real) ?: 'application/octet-stream';
+            // mime_content_type misdetects fonts — map them explicitly
+            $fontMime = [
+                'ttf' => 'font/sfnt', 'otf' => 'font/sfnt',
+                'woff' => 'font/woff', 'woff2' => 'font/woff2',
+            ];
+            $ext = strtolower(pathinfo($real, PATHINFO_EXTENSION));
+            $mime = $fontMime[$ext] ?? (mime_content_type($real) ?: 'application/octet-stream');
             header('Content-Type: ' . $mime);
             header('Content-Length: ' . filesize($real));
             header('Cache-Control: public, max-age=86400');

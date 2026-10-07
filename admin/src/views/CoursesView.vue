@@ -42,7 +42,7 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
             <tr v-for="row in items" :key="row.id">
               <td class="font-medium text-white">{{ row.name }}</td>
               <td>{{ row.level }}</td>
-              <td class="text-gold-400 font-semibold">${{ parseFloat(row.price).toFixed(2) }}{{ row.period }}</td>
+              <td class="text-gold-400 font-semibold">Rp{{ Number(row.price).toLocaleString('id-ID') }}{{ row.period }}</td>
               <td>{{ row.class_size }}</td>
               <td><span class="badge" :class="row.is_featured ? 'badge-gold' : 'badge-gray'">{{ row.is_featured ? 'Yes' : 'No' }}</span></td>
               <td><span class="badge" :class="row.is_active ? 'badge-green' : 'badge-gray'">{{ row.is_active ? 'Active' : 'Hidden' }}</span></td>
@@ -77,7 +77,7 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
                   <div><label class="form-label">Sort Order</label><input v-model.number="form.sort_order" type="number" class="form-input"/></div>
                 </div>
                 <div class="grid grid-cols-3 gap-4">
-                  <div><label class="form-label">Price ($)</label><input v-model.number="form.price" type="number" step="0.01" min="0" required class="form-input"/></div>
+                  <div><label class="form-label">Price (IDR)</label><input v-model.number="form.price" type="number" step="1000" min="0" required class="form-input"/></div>
                   <div><label class="form-label">Period</label><input v-model="form.period" class="form-input" placeholder="/month"/></div>
                   <div><label class="form-label">Duration</label><input v-model="form.duration" class="form-input" placeholder="45 min / session"/></div>
                 </div>

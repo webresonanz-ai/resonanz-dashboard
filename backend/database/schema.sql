@@ -226,9 +226,9 @@ INSERT IGNORE INTO `news` (`id`,`title`,`category`,`excerpt`,`is_published`,`pub
 
 -- Courses
 INSERT IGNORE INTO `courses` (`id`,`name`,`level`,`price`,`duration`,`class_size`,`features`,`is_featured`,`sort_order`) VALUES
-(1,'Beginner Piano','Beginner',120.00,'45 min / session','Private','["Weekly 1-on-1 lessons","Practice materials included","Monthly progress report","Recital participation"]',0,1),
-(2,'Advanced Performance','Advanced',280.00,'90 min / session','Private','["Bi-weekly lessons","Masterclass access","Concert opportunities","Competition coaching","Recording sessions"]',1,2),
-(3,'Ensemble Program','Intermediate',180.00,'120 min / session','Group (8)','["Weekly group rehearsals","Performance opportunities","Music theory class","Sheet music provided"]',0,3);
+(1,'Beginner Piano','Beginner',1980000.00,'45 min / session','Private','["Weekly 1-on-1 lessons","Practice materials included","Monthly progress report","Recital participation"]',0,1),
+(2,'Advanced Performance','Advanced',4620000.00,'90 min / session','Private','["Bi-weekly lessons","Masterclass access","Concert opportunities","Competition coaching","Recording sessions"]',1,2),
+(3,'Ensemble Program','Intermediate',2970000.00,'120 min / session','Group (8)','["Weekly group rehearsals","Performance opportunities","Music theory class","Sheet music provided"]',0,3);
 
 -- Facilities
 INSERT IGNORE INTO `facilities` (`id`,`name`,`capacity`,`description`,`icon`,`sort_order`) VALUES

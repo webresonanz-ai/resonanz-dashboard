@@ -1,8 +1,9 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import FooterBar from './components/FooterBar.vue'
+import { applySiteFont } from './composables/useSiteFont'
 
 const route = useRoute()
 
@@ -10,6 +11,9 @@ const route = useRoute()
 const isAuthRoute = computed(() =>
   ['login', 'register'].includes(route.name)
 )
+
+// Apply the admin-chosen custom font (if configured)
+onMounted(applySiteFont)
 </script>
 
 <template>
