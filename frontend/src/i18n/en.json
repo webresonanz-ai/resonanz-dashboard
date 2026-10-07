@@ -76,7 +76,28 @@
     "titleHighlight": "Events",
     "subtitle": "Experience the magic of live music performed by our talented students and acclaimed faculty.",
     "empty": "No upcoming events at the moment. Check back soon!",
-    "fallbackType": "Concert"
+    "fallbackType": "Concert",
+    "register": "Register",
+    "full": "Full",
+    "seats": "registered"
+  },
+  "registration": {
+    "eyebrow": "Event Registration",
+    "back": "Back",
+    "formTitle": "Register for this concert",
+    "name": "Name",
+    "namePlaceholder": "Your full name",
+    "email": "Email",
+    "phone": "Phone",
+    "submit": "Register Now",
+    "submitting": "Registering…",
+    "codeHint": "After registration you will receive a QR code (EventCode_ID_Timestamp_Random). Show it at the entrance.",
+    "seatsLeft": "{n} seats left",
+    "full": "Registration is full. Maximum capacity has been reached.",
+    "successTitle": "Registration Successful!",
+    "successText": "Thank you, {name}! Show this QR code at the entrance.",
+    "registerAnother": "Register another guest",
+    "backToEvents": "Back to events"
   },
   "news": {
     "eyebrow": "Stay Updated",
@@ -230,6 +251,7 @@
     "contact": "Contact",
     "login": "Sign In",
     "register": "Create Account",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "eventRegister": "Event Registration"
   }
 }

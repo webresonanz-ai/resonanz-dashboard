@@ -5,12 +5,32 @@ import { useAuthStore } from '@/stores/authStore'
 import PageHeader from '@/components/PageHeader.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { Plus, Pencil, Trash2, X, Loader2, ExternalLink, ImagePlus, Link2, Upload } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, X, Loader2, ExternalLink, ImagePlus, Link2, Upload, Users } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const { items, loading, saving, deleting, fetchAll, create, update, remove } = useCrud('/api/admin/events')
 onMounted(fetchAll)
+
+const regsModal = ref(false)
+const regsLoading = ref(false)
+const regsEvent = ref(null)
+const regs = ref([])
+
+async function openRegistrations(row) {
+  regsEvent.value = row
+  regs.value = []
+  regsModal.value = true
+  regsLoading.value = true
+  try {
+    const json = await auth.apiFetch(`/api/admin/events/${row.id}/registrations`)
+    regs.value = json.data?.registrations ?? []
+  } catch {
+    // toast handled in apiFetch caller? show empty
+  } finally {
+    regsLoading.value = false
+  }
+}
 
 const EVENT_TYPES = ['Concert', 'Workshop', 'Masterclass']
 
@@ -20,7 +40,7 @@ const coverMode = ref('upload') // 'upload' | 'url'
 const coverFile = ref(null)
 const coverPreview = ref('')
 const coverFileInput = ref(null)
-const form  = reactive({ id:null, title:'', event_date:'', event_time:'19:00', venue:'', type:'Concert', use_registration_url:0, registration_url:'', cover_image:'', tag:'', is_active:1 })
+const form  = reactive({ id:null, title:'', event_date:'', event_time:'19:00', venue:'', type:'Concert', event_code:'', max_capacity:'', use_registration_url:0, registration_url:'', cover_image:'', tag:'', is_active:1 })
 
 function resolveCover(path) {
   if (!path) return ''
@@ -30,7 +50,7 @@ function resolveCover(path) {
 }
 
 function emptyForm() {
-  return { id:null, title:'', event_date:'', event_time:'19:00', venue:'', type:'Concert', use_registration_url:0, registration_url:'', cover_image:'', tag:'', is_active:1 }
+  return { id:null, title:'', event_date:'', event_time:'19:00', venue:'', type:'Concert', event_code:'', max_capacity:'', use_registration_url:0, registration_url:'', cover_image:'', tag:'', is_active:1 }
 }
 function resetCover() { coverMode.value = 'upload'; coverFile.value = null; coverPreview.value = ''; if (coverFileInput.value) coverFileInput.value.value = '' }
 function openCreate() { Object.assign(form, emptyForm()); resetCover(); isEdit.value=false; modal.value=true }
@@ -41,6 +61,8 @@ function openEdit(r)  {
   const _useUrl = form.use_registration_url ?? r.use_external_url ?? 0
   form.use_registration_url = _useUrl ? 1 : 0
   form.registration_url = form.registration_url ?? r.external_url ?? ''
+  form.event_code = (form.event_code ?? '').toString().toUpperCase()
+  form.max_capacity = form.max_capacity ?? ''
   form.cover_image = form.cover_image ?? ''
   form.is_active = form.is_active ? 1 : 0
   // cover preview state
@@ -53,7 +75,10 @@ function openEdit(r)  {
 }
 function onTypeChange() {
   // Clear URL fields when not a Concert
-  if (form.type !== 'Concert') { form.use_registration_url = 0; form.registration_url = '' }
+  if (form.type !== 'Concert') { form.use_registration_url = 0; form.registration_url = ''; form.event_code = ''; form.max_capacity = '' }
+}
+function onEventCodeInput() {
+  form.event_code = (form.event_code ?? '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20)
 }
 function onCoverFile(e) {
   const f = e.target.files?.[0]
@@ -86,6 +111,16 @@ async function submit() {
     d.registration_url = null
   } else {
     d.registration_url = (d.registration_url || '').trim() || null
+  }
+  // internal registration fields: only Concert without external URL
+  const isInternal = d.type === 'Concert' && !d.use_registration_url
+  if (isInternal) {
+    d.event_code = (d.event_code || '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20) || null
+    const cap = parseInt(d.max_capacity, 10)
+    d.max_capacity = Number.isFinite(cap) && cap > 0 ? cap : null
+  } else {
+    d.event_code = null
+    d.max_capacity = null
   }
   // cover image: upload first when a new file was picked
   try {
@@ -124,7 +159,7 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
         <div v-if="loading" class="flex items-center justify-center py-16"><Loader2 class="w-6 h-6 text-gold-400 animate-spin"/></div>
         <EmptyState v-else-if="!items.length" />
         <table v-else class="data-table">
-          <thead><tr><th>Cover</th><th>Title</th><th>Date</th><th>Time</th><th>Venue</th><th>Type</th><th>Tag</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
+          <thead><tr><th>Cover</th><th>Title</th><th>Date</th><th>Time</th><th>Venue</th><th>Type</th><th>Code / Capacity</th><th>Tag</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
           <tbody>
             <tr v-for="row in items" :key="row.id">
               <td>
@@ -139,10 +174,18 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
                 <span class="badge badge-gold">{{ row.type || 'Concert' }}</span>
                 <ExternalLink v-if="row.type === 'Concert' && (row.use_registration_url == 1 || row.use_registration_url === true) && row.registration_url" class="w-3.5 h-3.5 inline-block ml-1 text-gold-400" />
               </td>
+              <td>
+                <span v-if="row.type === 'Concert' && !(row.use_registration_url == 1 || row.use_registration_url === true)" class="text-xs text-gray-300">
+                  <span class="font-mono font-semibold text-gold-300">{{ row.event_code || '—' }}</span>
+                  <span class="text-gray-500"> · </span>{{ row.registered_count ?? 0 }}{{ row.max_capacity ? `/${row.max_capacity}` : '' }}
+                </span>
+                <span v-else class="text-gray-600 text-xs">—</span>
+              </td>
               <td><span v-if="row.tag" class="badge badge-gold">{{ row.tag }}</span></td>
               <td><span class="badge" :class="row.is_active ? 'badge-green' : 'badge-gray'">{{ row.is_active ? 'Active' : 'Hidden' }}</span></td>
               <td class="text-right">
                 <div class="flex items-center justify-end gap-1">
+                  <button v-if="row.type === 'Concert' && !(row.use_registration_url == 1 || row.use_registration_url === true)" class="btn-icon" title="View registrations" @click="openRegistrations(row)"><Users class="w-4 h-4"/></button>
                   <button class="btn-icon" @click="openEdit(row)"><Pencil class="w-4 h-4"/></button>
                   <button class="btn-icon hover:text-red-400" @click="confirmId=row.id"><Trash2 class="w-4 h-4"/></button>
                 </div>
@@ -188,6 +231,18 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
                     <input v-model="form.registration_url" type="url" required placeholder="https://tickets.example.com/event-123" class="form-input" />
                     <p class="text-xs text-gray-500 mt-1">When enabled, “Book Now” redirects visitors to this URL.</p>
                   </div>
+                  <div v-else class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="form-label">Event code</label>
+                      <input v-model="form.event_code" class="form-input font-mono uppercase" maxlength="20" placeholder="RSNVCFEST" @input="onEventCodeInput" />
+                      <p class="text-xs text-gray-500 mt-1">Used in QR code: CODE_ID_TIMESTAMP_RANDOM.</p>
+                    </div>
+                    <div>
+                      <label class="form-label">Max capacity</label>
+                      <input v-model="form.max_capacity" type="number" min="1" step="1" class="form-input" placeholder="e.g. 500" />
+                      <p class="text-xs text-gray-500 mt-1">Empty = unlimited seats.</p>
+                    </div>
+                  </div>
                 </div>
                 <div class="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
                   <label class="form-label">Cover image (optional)</label>
@@ -227,5 +282,41 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
     </transition>
     <ConfirmDialog :open="!!confirmId" title="Delete Event" message="This will permanently remove the event."
       :loading="deleting" @confirm="confirmDelete" @cancel="confirmId=null" />
+
+    <transition name="fade">
+      <div v-if="regsModal" class="modal-overlay" @click.self="regsModal=false">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3 class="font-semibold text-white">Registrations — {{ regsEvent?.title }}</h3>
+            <button class="btn-icon" @click="regsModal=false"><X class="w-4 h-4"/></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-sm text-gray-400 mb-3">
+              Code <span class="font-mono text-gold-300">{{ regsEvent?.event_code || '—' }}</span>
+              · {{ regs.length }}{{ regsEvent?.max_capacity ? `/${regsEvent.max_capacity}` : '' }} registered
+            </p>
+            <div v-if="regsLoading" class="flex items-center justify-center py-10"><Loader2 class="w-6 h-6 text-gold-400 animate-spin"/></div>
+            <p v-else-if="!regs.length" class="text-sm text-gray-500 py-6 text-center">No registrations yet.</p>
+            <div v-else class="overflow-x-auto">
+              <table class="data-table">
+                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>QR code</th></tr></thead>
+                <tbody>
+                  <tr v-for="g in regs" :key="g.id">
+                    <td>{{ g.id }}</td>
+                    <td class="font-medium text-white">{{ g.name }}</td>
+                    <td>{{ g.email }}</td>
+                    <td>{{ g.phone }}</td>
+                    <td class="font-mono text-xs text-gold-300">{{ g.registration_code }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" @click="regsModal=false">Close</button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>

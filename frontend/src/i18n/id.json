@@ -76,7 +76,28 @@
     "titleHighlight": "Mendatang",
     "subtitle": "Rasakan keajaiban musik live yang dibawakan oleh siswa berbakat dan fakultas ternama kami.",
     "empty": "Belum ada acara mendatang saat ini. Silakan periksa kembali nanti!",
-    "fallbackType": "Konser"
+    "fallbackType": "Konser",
+    "register": "Daftar",
+    "full": "Penuh",
+    "seats": "terdaftar"
+  },
+  "registration": {
+    "eyebrow": "Pendaftaran Acara",
+    "back": "Kembali",
+    "formTitle": "Daftar untuk konser ini",
+    "name": "Nama",
+    "namePlaceholder": "Nama lengkap Anda",
+    "email": "Email",
+    "phone": "Telepon",
+    "submit": "Daftar Sekarang",
+    "submitting": "Mendaftar…",
+    "codeHint": "Setelah pendaftaran Anda akan menerima kode QR (EventCode_ID_Timestamp_Random). Tunjukkan di pintu masuk.",
+    "seatsLeft": "tersisa {n} kursi",
+    "full": "Pendaftaran penuh. Kapasitas maksimum telah tercapai.",
+    "successTitle": "Pendaftaran Berhasil!",
+    "successText": "Terima kasih, {name}! Tunjukkan kode QR ini di pintu masuk.",
+    "registerAnother": "Daftarkan tamu lain",
+    "backToEvents": "Kembali ke acara"
   },
   "news": {
     "eyebrow": "Tetap Terkini",
@@ -230,6 +251,7 @@
     "contact": "Kontak",
     "login": "Masuk",
     "register": "Buat Akun",
-    "dashboard": "Dasbor"
+    "dashboard": "Dasbor",
+    "eventRegister": "Pendaftaran Acara"
   }
 }

@@ -88,6 +88,7 @@ use Middleware\ValidationMiddleware;
 use Controllers\AuthController;
 use Controllers\ScheduleController;
 use Controllers\EventController;
+use Controllers\EventRegistrationController;
 use Controllers\NewsController;
 use Controllers\CourseController;
 use Controllers\FacilityController;
@@ -111,6 +112,7 @@ $rl      = new RateLimitMiddleware();
 $auth     = new AuthController();
 $schedule = new ScheduleController();
 $event    = new EventController();
+$eventReg = new EventRegistrationController();
 $news     = new NewsController();
 $course   = new CourseController();
 $facility = new FacilityController();
@@ -147,6 +149,16 @@ $r->post('/api/auth/logout', [$auth, 'logout'],  [$authMw]);
 // ═══════════════════════════════════════════════════════════════
 $r->get('/api/schedule',   [$schedule, 'publicIndex']);
 $r->get('/api/events',    [$event,    'publicIndex']);
+$r->get('/api/events/:id', [$event,   'publicShow']);
+$r->post('/api/events/:id/register', [$eventReg, 'register'], [
+    $rl,
+    ValidationMiddleware::make([
+        'name'  => 'required|min:2|max:100',
+        'email' => 'required|email|max:255',
+        'phone' => 'required|min:5|max:30',
+    ]),
+]);
+$r->get('/api/events/:id/availability', [$eventReg, 'availability']);
 $r->get('/api/news',       [$news,     'publicIndex']);
 $r->get('/api/courses',    [$course,   'publicIndex']);
 $r->get('/api/facilities', [$facility, 'publicIndex']);
@@ -177,6 +189,8 @@ $r->get('/api/admin/events',     [$event, 'index'],   [$adminMw]);
 $r->post('/api/admin/events',    [$event, 'store'],   [$adminMw]);
 $r->put('/api/admin/events/:id', [$event, 'update'],  [$adminMw]);
 $r->delete('/api/admin/events/:id', [$event, 'destroy'], [$adminMw]);
+$r->get('/api/admin/events/:id/registrations', [$eventReg, 'adminIndex'], [$adminMw]);
+$r->delete('/api/admin/registrations/:id', [$eventReg, 'adminDestroy'], [$adminMw]);
 
 // ── News ────────────────────────────────────────────────────
 $r->get('/api/admin/news',     [$news, 'index'],   [$adminMw]);

@@ -1,10 +1,12 @@
 <script setup>
 import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Calendar, MapPin, Ticket, Clock, ArrowRight, AlertCircle, RefreshCw, ExternalLink } from 'lucide-vue-next'
+import { Calendar, MapPin, Ticket, Clock, ArrowRight, AlertCircle, RefreshCw, ExternalLink, Users } from 'lucide-vue-next'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import { useApi } from '@/composables/useApi'
 
+const router = useRouter()
 const { locale } = useI18n()
 
 useScrollReveal()
@@ -52,12 +54,23 @@ function isExternal(e) {
   return e?.type === 'Concert' && on && !!getRegistrationUrl(e)
 }
 
+function isInternalRegistration(e) {
+  if (e?.type !== 'Concert') return false
+  const flag = e?.use_registration_url ?? e?.use_external_url ?? 0
+  const on = flag == 1 || flag === true || flag === '1' || flag === 'true'
+  return !on
+}
+
+function isFull(e) {
+  const cap = e?.max_capacity
+  if (cap == null || !(cap > 0)) return false
+  return (e?.registered_count ?? 0) >= cap
+}
+
 function handleBook(e) {
-  const url = getRegistrationUrl(e)
-  if (e?.type === 'Concert' && url) {
-    const flag = e?.use_registration_url ?? e?.use_external_url ?? 0
-    const on = flag == 1 || flag === true || flag === '1' || flag === 'true'
-    if (on) window.open(url, '_blank', 'noopener')
+  if (isExternal(e)) return // anchor handles it
+  if (e?.type === 'Concert' && isInternalRegistration(e) && !isFull(e)) {
+    router.push({ name: 'event-register', params: { id: e.id } })
   }
 }
 </script>
@@ -168,6 +181,10 @@ function handleBook(e) {
               <MapPin class="w-4 h-4 text-gold-400 shrink-0" />
               {{ e.venue }}
             </div>
+            <div v-if="isInternalRegistration(e) && e.max_capacity" class="flex items-center gap-2.5">
+              <Users class="w-4 h-4 text-gold-400 shrink-0" />
+              {{ e.registered_count ?? 0 }}/{{ e.max_capacity }} {{ $t('events.seats') }}
+            </div>
           </div>
           <div class="flex items-center justify-between pt-4 border-t border-gold-500/20">
             <span class="text-sm font-medium text-gold-300">{{ e.type || $t('events.fallbackType') }}</span>
@@ -180,6 +197,15 @@ function handleBook(e) {
               <span class="relative">{{ $t('common.bookNow') }}</span>
               <ExternalLink class="w-3.5 h-3.5 relative" />
             </a>
+            <button v-else-if="isInternalRegistration(e)" @click="handleBook(e)" :disabled="isFull(e)"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-gold-gradient text-maroon-950
+                           font-semibold text-sm rounded-lg btn-magnetic relative overflow-hidden group/btn disabled:opacity-50">
+              <span class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full
+                           bg-gradient-to-r from-transparent via-white/25 to-transparent
+                           transition-transform duration-500"></span>
+              <span class="relative">{{ isFull(e) ? $t('events.full') : $t('events.register') }}</span>
+              <ArrowRight v-if="!isFull(e)" class="w-3.5 h-3.5 relative group-hover/btn:translate-x-0.5 transition-transform" />
+            </button>
             <button v-else @click="handleBook(e)"
                     class="inline-flex items-center gap-1.5 px-4 py-2 bg-gold-gradient text-maroon-950
                            font-semibold text-sm rounded-lg btn-magnetic relative overflow-hidden group/btn">

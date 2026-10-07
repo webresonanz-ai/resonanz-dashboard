@@ -11,6 +11,7 @@ const router = createRouter({
     { path: '/',            name: 'home',         component: HomeView,                                                              meta: { titleKey: 'meta.home' } },
     { path: '/schedule',    name: 'schedule',     component: () => import('../views/ScheduleView.vue'),                             meta: { titleKey: 'meta.schedule' } },
     { path: '/event',       name: 'event',        component: () => import('../views/EventView.vue'),                                meta: { titleKey: 'meta.events' } },
+    { path: '/event/:id/register', name: 'event-register', component: () => import('../views/EventRegisterView.vue'),            meta: { titleKey: 'meta.eventRegister' } },
     { path: '/news',        name: 'news',         component: () => import('../views/NewsView.vue'),                                 meta: { titleKey: 'meta.news' } },
     { path: '/courses',     name: 'courses',      component: () => import('../views/CoursesView.vue'),                              meta: { titleKey: 'meta.courses' } },
     { path: '/facilitation',name: 'facilitation', component: () => import('../views/FacilitationView.vue'),                        meta: { titleKey: 'meta.facilitation' } },

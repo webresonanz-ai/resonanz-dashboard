@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS `events` (
     `event_time` TIME         NOT NULL,
     `venue`      VARCHAR(200) NOT NULL,
     `type`       ENUM('Concert','Workshop','Masterclass') NOT NULL DEFAULT 'Concert',
+    `event_code` VARCHAR(20)  NULL,
+    `max_capacity` INT UNSIGNED NULL,
     `use_registration_url` TINYINT(1) NOT NULL DEFAULT 0,
     `registration_url`     VARCHAR(500) NULL,
     `cover_image`      VARCHAR(500) NULL,
@@ -160,6 +162,26 @@ CREATE TABLE IF NOT EXISTS `contact_messages` (
     `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     INDEX `idx_contact_is_read` (`is_read`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ───────────────────────────────────────────────────────────────
+--  event_registrations  (internal concert registration)
+--  registration_code format: EventCode_RegistrationID_Timestamp_Random4
+-- ───────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS `event_registrations` (
+    `id`                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `event_id`          INT UNSIGNED NOT NULL,
+    `name`              VARCHAR(100) NOT NULL,
+    `email`             VARCHAR(255) NOT NULL,
+    `phone`             VARCHAR(30)  NOT NULL,
+    `registration_code` VARCHAR(100) NULL,
+    `created_at`        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_event_reg_code` (`registration_code`),
+    INDEX `idx_event_reg_event` (`event_id`),
+    INDEX `idx_event_reg_email` (`event_id`, `email`),
+    CONSTRAINT `fk_event_reg_event` FOREIGN KEY (`event_id`)
+        REFERENCES `events` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ═══════════════════════════════════════════════════════════════
