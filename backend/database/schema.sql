@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS `facilities` (
     `capacity`   VARCHAR(80)  NOT NULL,
     `description` TEXT        NOT NULL,
     `icon`       VARCHAR(60)  NOT NULL DEFAULT 'Music',
+    `image`      VARCHAR(500) NULL,
     `is_active`  TINYINT(1)   NOT NULL DEFAULT 1,
     `sort_order` TINYINT UNSIGNED NOT NULL DEFAULT 0,
     `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -9,10 +9,19 @@ import { useApi } from '@/composables/useApi'
 
 useScrollReveal()
 
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+
 const { data, loading, error, fetch } = useApi('/api/facilities')
 onMounted(fetch)
 
 const facilities = computed(() => data.value ?? [])
+
+function resolveImage(f) {
+  const raw = f?.image ?? ''
+  const s = String(raw).trim()
+  if (!s) return ''
+  return /^https?:\/\//i.test(s) ? s : `${API_BASE}${s.startsWith('/') ? s : `/${s}`}`
+}
 
 /** Map icon name string (stored in DB) → lucide component */
 const iconMap = { Music, Piano, Mic2, Drum, Guitar, Speaker, Lightbulb, Snowflake, Building2, Star }
@@ -74,9 +83,17 @@ function resolveIcon(name) {
       <div
         v-for="(f, i) in facilities"
         :key="f.id"
-        class="reveal glass-card p-6 card-lift animated-border group cursor-default"
+        class="reveal glass-card overflow-hidden card-lift animated-border group cursor-default"
         :class="`delay-${(i % 4) * 100 + 100}`"
       >
+        <!-- Preview image (falls back to icon when empty) -->
+        <div v-if="resolveImage(f)" class="aspect-video overflow-hidden border-b border-gold-500/20">
+          <img :src="resolveImage(f)" :alt="f.name" loading="lazy"
+               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+               @error="$event.target.style.display = 'none'" />
+        </div>
+
+        <div class="p-6">
         <!-- Icon -->
         <div class="w-14 h-14 rounded-xl bg-gold-500/10 border border-gold-500/30
                     flex items-center justify-center mb-5
@@ -98,6 +115,7 @@ function resolveIcon(name) {
         </span>
 
         <p class="text-sm text-gray-400 leading-relaxed">{{ f.description }}</p>
+        </div>
       </div>
     </div>
 

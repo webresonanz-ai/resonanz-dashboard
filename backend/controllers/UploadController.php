@@ -10,14 +10,14 @@ use Core\Response;
 /**
  * UploadController — handles admin image uploads.
  *
- * POST /api/admin/uploads  (multipart/form-data, field: "image", optional field: "folder" = events|home)
+ * POST /api/admin/uploads  (multipart/form-data, field: "image", optional field: "folder" = events|home|facilities)
  * Returns: { url: "/uploads/events/xxx.jpg" }
  */
 class UploadController
 {
     private const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
     private const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-    private const ALLOWED_FOLDERS = ['events' => 'event_', 'home' => 'home_'];
+    private const ALLOWED_FOLDERS = ['events' => 'event_', 'home' => 'home_', 'facilities' => 'facility_'];
 
     public function store(Request $req, Response $res): void
     {
@@ -58,10 +58,10 @@ class UploadController
             return;
         }
 
-        // Target subfolder (events = default, home = home page images)
+        // Target subfolder (events = default)
         $folder = strtolower(trim((string) ($req->input('folder') ?? 'events')));
         if (!array_key_exists($folder, self::ALLOWED_FOLDERS)) {
-            $res->error('Invalid folder. Allowed: events, home.', 422);
+            $res->error('Invalid folder. Allowed: events, home, facilities.', 422);
             return;
         }
         $prefix = self::ALLOWED_FOLDERS[$folder];
