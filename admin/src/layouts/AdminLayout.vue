@@ -4,7 +4,7 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import {
   LayoutDashboard, Calendar, Music, Newspaper, BookOpen,
-  Building2, Users, Mail, LogOut, Menu, X, Music2, ChevronRight,
+  Building2, Users, Mail, LogOut, Menu, X, Music2, ChevronRight, House,
 } from 'lucide-vue-next'
 
 const auth   = useAuthStore()
@@ -14,6 +14,7 @@ const sidebarOpen = ref(true)
 
 const nav = [
   { name: 'Dashboard',    to: '/',           icon: LayoutDashboard },
+  { name: 'Home Page',    to: '/home',       icon: House },
   { name: 'Schedule',     to: '/schedule',   icon: Calendar },
   { name: 'Events',      to: '/events',    icon: Music },
   { name: 'News',         to: '/news',       icon: Newspaper },

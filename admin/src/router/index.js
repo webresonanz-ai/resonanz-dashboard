@@ -11,6 +11,7 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         { path: '',          name: 'dashboard',    component: () => import('@/views/DashboardView.vue') },
+        { path: 'home',      name: 'home',         component: () => import('@/views/HomeView.vue') },
         { path: 'schedule',  name: 'schedule',     component: () => import('@/views/ScheduleView.vue') },
         { path: 'events',    name: 'events',       component: () => import('@/views/EventsView.vue') },
         { path: 'news',      name: 'news',         component: () => import('@/views/NewsView.vue') },

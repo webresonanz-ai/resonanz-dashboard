@@ -10,13 +10,14 @@ use Core\Response;
 /**
  * UploadController — handles admin image uploads.
  *
- * POST /api/admin/uploads  (multipart/form-data, field: "image")
+ * POST /api/admin/uploads  (multipart/form-data, field: "image", optional field: "folder" = events|home)
  * Returns: { url: "/uploads/events/xxx.jpg" }
  */
 class UploadController
 {
     private const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
     private const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    private const ALLOWED_FOLDERS = ['events' => 'event_', 'home' => 'home_'];
 
     public function store(Request $req, Response $res): void
     {
@@ -57,16 +58,24 @@ class UploadController
             return;
         }
 
-        $dir = __DIR__ . '/../public/uploads/events';
+        // Target subfolder (events = default, home = home page images)
+        $folder = strtolower(trim((string) ($req->input('folder') ?? 'events')));
+        if (!array_key_exists($folder, self::ALLOWED_FOLDERS)) {
+            $res->error('Invalid folder. Allowed: events, home.', 422);
+            return;
+        }
+        $prefix = self::ALLOWED_FOLDERS[$folder];
+
+        $dir = __DIR__ . '/../public/uploads/' . $folder;
         if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
             $res->error('Could not create upload directory.', 500);
             return;
         }
 
         try {
-            $name = 'event_' . date('Ymd_His') . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+            $name = $prefix . date('Ymd_His') . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
         } catch (\Throwable) {
-            $name = 'event_' . date('Ymd_His') . '_' . uniqid() . '.' . $ext;
+            $name = $prefix . date('Ymd_His') . '_' . uniqid() . '.' . $ext;
         }
 
         if (!move_uploaded_file($tmp, $dir . '/' . $name)) {
@@ -74,7 +83,7 @@ class UploadController
             return;
         }
 
-        $res->success(['url' => '/uploads/events/' . $name], 'Uploaded successfully.', 201);
+        $res->success(['url' => '/uploads/' . $folder . '/' . $name], 'Uploaded successfully.', 201);
     }
 
     private function uploadErrorMessage(int $code): string

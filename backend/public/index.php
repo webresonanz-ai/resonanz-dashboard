@@ -93,6 +93,7 @@ use Controllers\CourseController;
 use Controllers\FacilityController;
 use Controllers\TeacherController;
 use Controllers\ContactController;
+use Controllers\HomeController;
 use Controllers\UploadController;
 
 $req = new Request();
@@ -115,6 +116,7 @@ $course   = new CourseController();
 $facility = new FacilityController();
 $teacher  = new TeacherController();
 $contact  = new ContactController();
+$home     = new HomeController();
 $upload   = new UploadController();
 
 // ═══════════════════════════════════════════════════════════════
@@ -149,6 +151,7 @@ $r->get('/api/news',       [$news,     'publicIndex']);
 $r->get('/api/courses',    [$course,   'publicIndex']);
 $r->get('/api/facilities', [$facility, 'publicIndex']);
 $r->get('/api/teachers',   [$teacher,  'publicIndex']);
+$r->get('/api/home',       [$home,     'publicIndex']);
 
 $r->post('/api/contact', [$contact, 'submit'], [
     ValidationMiddleware::make([
@@ -198,6 +201,11 @@ $r->get('/api/admin/teachers',     [$teacher, 'index'],   [$adminMw]);
 $r->post('/api/admin/teachers',    [$teacher, 'store'],   [$adminMw]);
 $r->put('/api/admin/teachers/:id', [$teacher, 'update'],  [$adminMw]);
 $r->delete('/api/admin/teachers/:id', [$teacher, 'destroy'], [$adminMw]);
+
+// ── Home page config ────────────────────────────────────────
+$r->get('/api/admin/home',    [$home, 'show'],   [$adminMw]);
+$r->put('/api/admin/home',    [$home, 'update'], [$adminMw]);
+$r->delete('/api/admin/home', [$home, 'reset'],  [$adminMw]);
 
 // ── Contact messages ────────────────────────────────────────
 $r->get('/api/admin/contact/stats', [$contact, 'stats'],   [$adminMw]);

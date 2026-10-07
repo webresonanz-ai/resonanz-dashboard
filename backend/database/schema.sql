@@ -135,6 +135,18 @@ CREATE TABLE IF NOT EXISTS `teachers` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ───────────────────────────────────────────────────────────────
+--  home_settings  (guest Home page content overrides, EN/ID)
+--  Missing/empty values → frontend falls back to built-in defaults.
+-- ───────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS `home_settings` (
+    `key`        VARCHAR(80) NOT NULL,
+    `value_en`   TEXT        NULL,
+    `value_id`   TEXT        NULL,
+    `updated_at` DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ───────────────────────────────────────────────────────────────
 --  contact_messages  (submissions from the Contact form)
 -- ───────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS `contact_messages` (

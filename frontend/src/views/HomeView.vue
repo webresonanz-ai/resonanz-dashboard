@@ -6,28 +6,83 @@ import { useScrollReveal } from '@/composables/useScrollReveal'
 import { useApi } from '@/composables/useApi'
 import { ref, computed, onMounted } from 'vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 useScrollReveal()
 
 // ─── Live counts from API ────────────────────────────────────
 const { data: eventsData, fetch: fetchEvents } = useApi('/api/events')
 const { data: teachersData, fetch: fetchTeachers } = useApi('/api/teachers')
-onMounted(() => { fetchEvents(); fetchTeachers() })
+const { data: homeData, fetch: fetchHome } = useApi('/api/home')
+onMounted(() => { fetchEvents(); fetchTeachers(); fetchHome() })
 
-// Stats: event count is driven by API; others are fixed brand values
+// ─── Home page overrides (admin-configurable, bilingual) ─────
+// Empty/missing setting → fall back to the built-in i18n default.
+function setting(key) {
+  const v = homeData.value?.[key]
+  if (!v) return ''
+  const lang = locale.value === 'id' ? 'id' : 'en'
+  const s = v[lang] ?? v.en ?? ''
+  return String(s ?? '').trim()
+}
+
+/** Text override with i18n fallback — reactive to locale + API data. */
+function ht(key, tkey) {
+  return setting(key) || t(tkey)
+}
+
+/** Numeric override with fallback. */
+function hnum(key, fallback) {
+  const n = parseInt(setting(key), 10)
+  return Number.isFinite(n) && n >= 0 ? n : fallback
+}
+
+function resolveHomeImage(path) {
+  const s = String(path ?? '').trim()
+  if (!s) return ''
+  return /^https?:\/\//i.test(s) ? s : `${API_BASE}${s.startsWith('/') ? s : `/${s}`}`
+}
+
+const heroBg  = computed(() => resolveHomeImage(setting('hero_background_image')))
+const sideImg = computed(() => resolveHomeImage(setting('hero_side_image')))
+
+// Stats: students/awards values editable; events/faculty driven by API
 const stats = computed(() => [
-  { label: t('home.stats.students'), value: 500,                              suffix: '+', icon: Users    },
-  { label: t('home.stats.events'),   value: eventsData.value?.length ?? 120,  suffix: '+', icon: Music    },
-  { label: t('home.stats.awards'),   value: 45,                              suffix: '',  icon: Award    },
-  { label: t('home.stats.faculty'),  value: teachersData.value?.length ?? 25, suffix: '',  icon: Calendar },
+  { label: ht('stat_students_label', 'home.stats.students'), value: hnum('stat_students_value', 500), suffix: '+', icon: Users    },
+  { label: ht('stat_events_label',   'home.stats.events'),   value: eventsData.value?.length ?? 120,              suffix: '+', icon: Music    },
+  { label: ht('stat_awards_label',    'home.stats.awards'),   value: hnum('stat_awards_value', 45),                suffix: '',  icon: Award    },
+  { label: ht('stat_faculty_label',   'home.stats.faculty'),  value: teachersData.value?.length ?? 25,             suffix: '',  icon: Calendar },
 ])
 
-const features = computed(() => [
-  { title: t('home.features.0.title'), desc: t('home.features.0.desc'), icon: Award },
-  { title: t('home.features.1.title'), desc: t('home.features.1.desc'), icon: Music },
-  { title: t('home.features.2.title'), desc: t('home.features.2.desc'), icon: Users },
-])
+const FEATURE_ICONS = [Award, Music, Users]
+
+function defaultFeatures() {
+  return [
+    { title: t('home.features.0.title'), desc: t('home.features.0.desc'), icon: Award },
+    { title: t('home.features.1.title'), desc: t('home.features.1.desc'), icon: Music },
+    { title: t('home.features.2.title'), desc: t('home.features.2.desc'), icon: Users },
+  ]
+}
+
+const features = computed(() => {
+  const raw = setting('features')
+  if (!raw) return defaultFeatures()
+  try {
+    const arr = JSON.parse(raw)
+    if (!Array.isArray(arr) || !arr.length) return defaultFeatures()
+    const lang = locale.value === 'id' ? 'id' : 'en'
+    return arr.slice(0, 6).map((f, i) => ({
+      title: String((lang === 'id' ? (f.title_id ?? f.title_en) : f.title_en) ?? '').trim()
+             || t(`home.features.${i % 3}.title`),
+      desc: String((lang === 'id' ? (f.desc_id ?? f.desc_en) : f.desc_en) ?? '').trim()
+            || t(`home.features.${i % 3}.desc`),
+      icon: FEATURE_ICONS[i % FEATURE_ICONS.length],
+    }))
+  } catch {
+    return defaultFeatures()
+  }
+})
 
 // ─── Animated counter ────────────────────────────────────────
 const displayStats = ref([0, 0, 0, 0])
@@ -70,6 +125,12 @@ onMounted(() => {
     <!-- ═══════════════════════════════════════════ HERO ═══ -->
     <section class="relative py-24 lg:py-36 overflow-hidden">
 
+      <!-- Admin-configurable background image -->
+      <div v-if="heroBg" class="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <img :src="heroBg" alt="" class="w-full h-full object-cover opacity-25" loading="eager" />
+        <div class="absolute inset-0 bg-gradient-to-b from-maroon-950/60 via-maroon-950/40 to-maroon-950"></div>
+      </div>
+
       <!-- Decorative rings -->
       <div class="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true">
         <div class="w-[600px] h-[600px] rounded-full border border-gold-500/5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
@@ -86,16 +147,16 @@ onMounted(() => {
                         bg-gold-500/10 border border-gold-500/30 text-gold-400
                         text-xs font-medium tracking-wider uppercase mb-6">
               <span class="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse"></span>
-              {{ $t('home.badge') }}
+              {{ ht('hero_badge', 'home.badge') }}
             </div>
 
             <h1 class="reveal delay-100 text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-              {{ $t('home.titleA') }} <span class="gold-shimmer">{{ $t('home.titleHighlight') }}</span><br />
-              {{ $t('home.titleB') }}
+              {{ ht('hero_title_a', 'home.titleA') }} <span class="gold-shimmer">{{ ht('hero_title_highlight', 'home.titleHighlight') }}</span><br />
+              {{ ht('hero_title_b', 'home.titleB') }}
             </h1>
 
             <p class="reveal delay-200 text-lg text-gray-300 leading-relaxed mb-8 max-w-xl">
-              {{ $t('home.subtitle') }}
+              {{ ht('hero_subtitle', 'home.subtitle') }}
             </p>
 
             <div class="reveal delay-300 flex flex-wrap gap-4">
@@ -105,7 +166,7 @@ onMounted(() => {
                 <span class="absolute inset-0 -translate-x-full group-hover:translate-x-full
                              bg-gradient-to-r from-transparent via-white/30 to-transparent
                              transition-transform duration-500 ease-in-out"></span>
-                <span class="relative">{{ $t('home.exploreCourses') }}</span>
+                <span class="relative">{{ ht('hero_primary_label', 'home.exploreCourses') }}</span>
                 <ArrowRight class="w-4 h-4 relative group-hover:translate-x-1 transition-transform" />
               </RouterLink>
 
@@ -114,7 +175,7 @@ onMounted(() => {
                        text-gold-400 font-semibold rounded-xl transition-all duration-300
                        hover:bg-gold-500/10 hover:border-gold-500/70 hover:scale-105 hover:shadow-gold group">
                 <Sparkles class="w-4 h-4 group-hover:text-gold-300 transition-colors" />
-                {{ $t('home.upcomingEvents') }}
+                {{ ht('hero_secondary_label', 'home.upcomingEvents') }}
               </RouterLink>
             </div>
           </div>
@@ -129,8 +190,8 @@ onMounted(() => {
                   <Award class="w-5 h-5 text-maroon-950" />
                 </div>
                 <div>
-                  <p class="text-2xl font-bold gold-text font-serif">45+</p>
-                  <p class="text-xs text-gray-400">{{ $t('home.awardsWon') }}</p>
+                  <p class="text-2xl font-bold gold-text font-serif">{{ hnum('hero_award_value', 45) }}+</p>
+                  <p class="text-xs text-gray-400">{{ ht('hero_award_label', 'home.awardsWon') }}</p>
                 </div>
               </div>
             </div>
@@ -146,7 +207,7 @@ onMounted(() => {
                   {{ ['ER','HT','AO'][n-1] }}
                 </div>
               </div>
-              <span class="text-xs text-gray-300 font-medium">{{ $t('home.studentsBadge') }}</span>
+              <span class="text-xs text-gray-300 font-medium">{{ ht('hero_students_label', 'home.studentsBadge') }}</span>
             </div>
 
             <!-- Main card -->
@@ -156,7 +217,10 @@ onMounted(() => {
               <div class="relative">
                 <div class="aspect-square rounded-2xl bg-maroon-gradient border border-gold-500/30
                             flex items-center justify-center overflow-hidden group cursor-default">
-                  <div class="relative flex items-center justify-center w-full h-full">
+                  <img v-if="sideImg" :src="sideImg" alt="Resonanz" loading="lazy"
+                       class="absolute inset-0 w-full h-full object-cover" />
+                  <div v-if="sideImg" class="absolute inset-0 bg-gradient-to-t from-maroon-950/50 via-transparent to-transparent"></div>
+                  <div v-else class="relative flex items-center justify-center w-full h-full">
                     <div class="absolute w-48 h-48 rounded-full border border-gold-400/20"
                          style="animation: ripple 3s ease-out infinite;"></div>
                     <div class="absolute w-36 h-36 rounded-full border border-gold-400/15"
@@ -208,10 +272,10 @@ onMounted(() => {
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="reveal text-center max-w-2xl mx-auto mb-16">
           <span class="text-gold-400 text-sm font-medium tracking-widest uppercase block mb-3">
-            {{ $t('home.whyEyebrow') }}
+            {{ ht('why_eyebrow', 'home.whyEyebrow') }}
           </span>
           <h2 class="text-3xl sm:text-4xl font-bold mb-4">
-            {{ $t('home.whyTitleA') }} <span class="gold-text">Resonanz</span>
+            {{ ht('why_title_a', 'home.whyTitleA') }} <span class="gold-text">Resonanz</span>
           </h2>
           <div class="flex items-center justify-center gap-3 mt-5">
             <div class="h-px w-16 bg-gold-gradient opacity-60"></div>
@@ -219,7 +283,7 @@ onMounted(() => {
             <div class="h-px w-16 bg-gold-gradient opacity-60"></div>
           </div>
           <p class="text-gray-400 mt-5">
-            {{ $t('home.whySubtitle') }}
+            {{ ht('why_subtitle', 'home.whySubtitle') }}
           </p>
         </div>
 
@@ -269,10 +333,10 @@ onMounted(() => {
               <div class="h-px w-12 bg-gold-gradient opacity-50"></div>
             </div>
             <h2 class="text-3xl sm:text-4xl font-bold mb-4">
-              {{ $t('home.ctaTitleA') }} <span class="gold-text">{{ $t('home.ctaTitleHighlight') }}</span>
+              {{ ht('cta_title_a', 'home.ctaTitleA') }} <span class="gold-text">{{ ht('cta_title_highlight', 'home.ctaTitleHighlight') }}</span>
             </h2>
             <p class="text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-              {{ $t('home.ctaSubtitle') }}
+              {{ ht('cta_subtitle', 'home.ctaSubtitle') }}
             </p>
             <RouterLink to="/contact"
               class="inline-flex items-center gap-2 px-10 py-4 bg-gold-gradient text-maroon-950
@@ -280,7 +344,7 @@ onMounted(() => {
               <span class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full
                            bg-gradient-to-r from-transparent via-white/30 to-transparent
                            transition-transform duration-500"></span>
-              <span class="relative">{{ $t('home.ctaButton') }}</span>
+              <span class="relative">{{ ht('cta_button_label', 'home.ctaButton') }}</span>
               <ArrowRight class="w-5 h-5 relative group-hover/btn:translate-x-1 transition-transform" />
             </RouterLink>
           </div>
