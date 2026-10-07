@@ -191,6 +191,7 @@ $r->put('/api/admin/events/:id', [$event, 'update'],  [$adminMw]);
 $r->delete('/api/admin/events/:id', [$event, 'destroy'], [$adminMw]);
 $r->get('/api/admin/events/:id/registrations', [$eventReg, 'adminIndex'], [$adminMw]);
 $r->delete('/api/admin/registrations/:id', [$eventReg, 'adminDestroy'], [$adminMw]);
+$r->post('/api/admin/registrations/:id/send-ticket', [$eventReg, 'adminSendTicket'], [$adminMw, $rl]);
 
 // ── News ────────────────────────────────────────────────────
 $r->get('/api/admin/news',     [$news, 'index'],   [$adminMw]);

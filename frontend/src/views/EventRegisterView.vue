@@ -157,10 +157,6 @@ function registerAnother() {
             <span class="font-bold">{{ event.title }}</span>
           </div>
           <canvas ref="qrCanvas" class="mx-auto rounded-lg"></canvas>
-          <p class="font-mono font-bold text-maroon-950 tracking-wider mt-2 break-all">
-            {{ result.registration.registration_code }}
-          </p>
-          <p class="text-xs text-gray-500 mt-1">CODE_ID_TIMESTAMP_RANDOM</p>
         </div>
         <div class="flex flex-wrap justify-center gap-3 mt-6">
           <button @click="registerAnother" class="px-5 py-2.5 rounded-xl text-sm font-semibold border border-gold-500/40 text-gold-300 hover:bg-gold-500/10 transition-colors">

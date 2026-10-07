@@ -2,12 +2,14 @@
 import { onMounted, ref, reactive } from 'vue'
 import { useCrud } from '@/composables/useCrud'
 import { useAuthStore } from '@/stores/authStore'
+import { useToastStore } from '@/stores/toastStore'
 import PageHeader from '@/components/PageHeader.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { Plus, Pencil, Trash2, X, Loader2, ExternalLink, ImagePlus, Link2, Upload, Users } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, X, Loader2, ExternalLink, ImagePlus, Link2, Upload, Users, Mail, Check } from 'lucide-vue-next'
 
 const auth = useAuthStore()
+const toast = useToastStore()
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const { items, loading, saving, deleting, fetchAll, create, update, remove } = useCrud('/api/admin/events')
 onMounted(fetchAll)
@@ -16,6 +18,8 @@ const regsModal = ref(false)
 const regsLoading = ref(false)
 const regsEvent = ref(null)
 const regs = ref([])
+const sendingId = ref(null)
+const sentMap = reactive({})
 
 async function openRegistrations(row) {
   regsEvent.value = row
@@ -29,6 +33,20 @@ async function openRegistrations(row) {
     // toast handled in apiFetch caller? show empty
   } finally {
     regsLoading.value = false
+  }
+}
+
+async function sendTicket(g) {
+  if (sendingId.value) return
+  sendingId.value = g.id
+  try {
+    const json = await auth.apiFetch(`/api/admin/registrations/${g.id}/send-ticket`, { method: 'POST' })
+    sentMap[g.id] = true
+    toast.success(json.message ?? `Ticket sent to ${g.email}.`)
+  } catch (e) {
+    toast.error(e.message ?? 'Could not send ticket email.')
+  } finally {
+    sendingId.value = null
   }
 }
 
@@ -299,7 +317,7 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
             <p v-else-if="!regs.length" class="text-sm text-gray-500 py-6 text-center">No registrations yet.</p>
             <div v-else class="overflow-x-auto">
               <table class="data-table">
-                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>QR code</th></tr></thead>
+                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>QR code</th><th class="text-right">Ticket</th></tr></thead>
                 <tbody>
                   <tr v-for="g in regs" :key="g.id">
                     <td>{{ g.id }}</td>
@@ -307,6 +325,13 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
                     <td>{{ g.email }}</td>
                     <td>{{ g.phone }}</td>
                     <td class="font-mono text-xs text-gold-300">{{ g.registration_code }}</td>
+                    <td class="text-right">
+                      <button class="btn-icon" :disabled="sendingId === g.id" :title="sentMap[g.id] ? 'Ticket sent — send again' : 'Send ticket email'" @click="sendTicket(g)">
+                        <Loader2 v-if="sendingId === g.id" class="w-4 h-4 animate-spin" />
+                        <Check v-else-if="sentMap[g.id]" class="w-4 h-4 text-green-400" />
+                        <Mail v-else class="w-4 h-4" />
+                      </button>
+                    </td>
                   </tr>
                 </tbody>
               </table>

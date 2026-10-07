@@ -7,6 +7,7 @@ namespace Controllers;
 use Core\Database;
 use Core\Request;
 use Core\Response;
+use Services\MailService;
 use PDO;
 
 /**
@@ -213,6 +214,49 @@ class EventRegistrationController
         }
         $this->db->prepare('DELETE FROM `event_registrations` WHERE id = :id')->execute(['id' => $id]);
         $res->success(null, 'Registration deleted.');
+    }
+
+    // ─── ADMIN: email the ticket (QR code) to a registered guest ───
+    public function adminSendTicket(Request $req, Response $res, array $params): void
+    {
+        $id = (int) ($params['id'] ?? 0);
+        $reg = $this->findRegistration($id);
+        if (!$reg) {
+            $res->error('Registration not found.', 404);
+            return;
+        }
+        if (empty($reg['registration_code'])) {
+            $res->error('This registration has no ticket code yet.', 422);
+            return;
+        }
+        $event = $this->findEvent((int) $reg['event_id'], false);
+        if (!$event) {
+            $res->error('Event not found.', 404);
+            return;
+        }
+        if (!MailService::isConfigured()) {
+            $res->error('Email is not configured (GOOGLE_APP_EMAIL / GOOGLE_APP_PASSWORD).', 500);
+            return;
+        }
+
+        $mailer = new MailService();
+        $ok = $mailer->sendTicket(
+            ['to' => (string) $reg['email'], 'name' => (string) $reg['name']],
+            [
+                'title' => (string) ($event['title'] ?? 'Event'),
+                'event_date' => (string) ($event['event_date'] ?? ''),
+                'event_time' => (string) ($event['event_time'] ?? ''),
+                'venue' => (string) ($event['venue'] ?? ''),
+                'event_code' => (string) ($event['event_code'] ?? ''),
+            ],
+            (string) $reg['registration_code']
+        );
+
+        if (!$ok) {
+            $res->error('Could not send ticket email: ' . $mailer->lastError(), 500);
+            return;
+        }
+        $res->success(['sent_to' => $reg['email']], 'Ticket sent to ' . $reg['email'] . '.');
     }
 
     // ─── HELPERS ───────────────────────────────────────────────────
