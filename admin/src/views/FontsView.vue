@@ -29,6 +29,18 @@ const localPreview = ref('') // blob: url for instant preview
 function resolveFont(path) {
   const s = String(path ?? '').trim()
   if (!s || s.startsWith('blob:')) return s
+  // Serve uploaded fonts via /api/fonts/:name (guaranteed CORS headers).
+  // Static /uploads/* may be served by the web server with no CORS headers.
+  // Leave fully external URLs on other hosts untouched.
+  const m = s.match(/\/uploads\/fonts\/([^/?#]+)/i)
+  if (m) {
+    if (/^https?:\/\//i.test(s)) {
+      try {
+        if (new URL(s).origin !== new URL(API).origin) return s
+      } catch { return s }
+    }
+    return `${API}/api/fonts/${m[1]}`
+  }
   return /^https?:\/\//i.test(s) ? s : `${API}${s.startsWith('/') ? s : `/${s}`}`
 }
 
@@ -36,12 +48,20 @@ function resolveFont(path) {
 const previewSrc = computed(() => localPreview.value || resolveFont(activeUrl.value))
 const hasCustom = computed(() => !!activeUrl.value)
 
+function fontFormat(url) {
+  const ext = String(url ?? '').split('?')[0].split('.').pop()?.toLowerCase() ?? ''
+  if (ext === 'woff2') return ` format('woff2')`
+  if (ext === 'woff') return ` format('woff')`
+  if (ext === 'otf') return ` format('opentype')`
+  return ` format('truetype')`
+}
+
 function refreshPreviewFace() {
   document.getElementById('admin-font-preview')?.remove()
   if (!previewSrc.value) return
   const style = document.createElement('style')
   style.id = 'admin-font-preview'
-  style.textContent = `@font-face{font-family:'${PREVIEW_FACE}';src:url('${previewSrc.value}');font-display:swap;}`
+  style.textContent = `@font-face{font-family:'${PREVIEW_FACE}';src:url('${previewSrc.value}')${fontFormat(previewSrc.value)};font-weight:400;font-style:normal;font-display:swap;}`
   document.head.appendChild(style)
 }
 
@@ -109,7 +129,7 @@ async function save() {
       fd.append('folder', 'fonts')
       const json = await auth.apiFetch('/api/admin/uploads', { method: 'POST', body: fd })
       uploading.value = false
-      if (!json.data?.url) return
+      if (!json.data?.url) { toast.error('Upload succeeded but returned no URL.'); return }
       url = json.data.url
     }
     await auth.apiFetch('/api/admin/home', {

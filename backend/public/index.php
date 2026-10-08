@@ -51,9 +51,23 @@ set_exception_handler(function (Throwable $e) use ($debug): void {
         $real = realpath($file);
         $base = realpath(__DIR__ . '/uploads');
         if ($real !== false && $base !== false && str_starts_with($real, $base) && is_file($real)) {
-            // mime_content_type misdetects fonts — map them explicitly
+            // Fonts are loaded cross-origin (<link>/@font-face from :5173 → :8000),
+            // so they MUST carry CORS headers. The bootstrap CORS block above
+            // already set them when Origin is allowed, but re-emit here to be
+            // safe (e.g. direct <link> loads, cached preflights).
+            $allowed = array_map('trim', explode(',', $_ENV['ALLOWED_ORIGINS'] ?? 'http://localhost:5173'));
+            $origin  = $_SERVER['HTTP_ORIGIN'] ?? '';
+            if (in_array($origin, $allowed, true)) {
+                header('Access-Control-Allow-Origin: ' . $origin);
+                header('Vary: Origin');
+            } else {
+                // Public font/image files need no credentials → wildcard is safe
+                header('Access-Control-Allow-Origin: *');
+            }
+            header('Cross-Origin-Resource-Policy: cross-origin');
+            // Correct MIME per format (browsers reject wrong font MIME in some modes)
             $fontMime = [
-                'ttf' => 'font/sfnt', 'otf' => 'font/sfnt',
+                'ttf' => 'font/ttf', 'otf' => 'font/otf',
                 'woff' => 'font/woff', 'woff2' => 'font/woff2',
             ];
             $ext = strtolower(pathinfo($real, PATHINFO_EXTENSION));
@@ -170,6 +184,9 @@ $r->get('/api/courses',    [$course,   'publicIndex']);
 $r->get('/api/facilities', [$facility, 'publicIndex']);
 $r->get('/api/teachers',   [$teacher,  'publicIndex']);
 $r->get('/api/home',       [$home,     'publicIndex']);
+// Public font files with guaranteed CORS headers (see UploadController::showFont).
+// Use /api/fonts/<file> instead of /uploads/fonts/<file> for @font-face.
+$r->get('/api/fonts/:name', [$upload, 'showFont']);
 
 $r->post('/api/contact', [$contact, 'submit'], [
     ValidationMiddleware::make([

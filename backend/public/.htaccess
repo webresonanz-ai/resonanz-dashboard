@@ -20,6 +20,25 @@ RewriteRule ^ index.php [QSA,L]
     Header always set Content-Security-Policy "default-src 'none'"
 </IfModule>
 
+# ── Fonts / uploads: served cross-origin (@font-face from :5173 → backend) ──
+# Static files bypass index.php, so CORS must be set here (Apache mode).
+# Without this, browsers silently refuse to load an uploaded .ttf.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(ttf|otf|woff|woff2)$">
+        Header always set Access-Control-Allow-Origin "*"
+        Header always set Cross-Origin-Resource-Policy "cross-origin"
+        Header always set Cache-Control "public, max-age=86400"
+        # Don't let the API-wide "default-src 'none'" block direct font views
+        Header always unset Content-Security-Policy
+    </FilesMatch>
+</IfModule>
+<IfModule mod_mime.c>
+    AddType font/ttf .ttf
+    AddType font/otf .otf
+    AddType font/woff .woff
+    AddType font/woff2 .woff2
+</IfModule>
+
 # ── Deny access to sensitive files ─────────────────────
 <FilesMatch "\.(env|sql|md|json|lock)$">
     Order allow,deny

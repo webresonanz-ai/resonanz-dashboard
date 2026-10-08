@@ -8,7 +8,7 @@ return [
     'jwt_expiry_minutes' => (int) ($_ENV['JWT_EXPIRY_MINUTES'] ?? 60),
 
     // ─── CORS ──────────────────────────────────────────────────────
-    'allowed_origins' => explode(',', $_ENV['ALLOWED_ORIGINS'] ?? 'http://localhost:5173'),
+    'allowed_origins' => array_map('trim', explode(',', $_ENV['ALLOWED_ORIGINS'] ?? 'http://localhost:5173')),
 
     // ─── Rate limiting ─────────────────────────────────────────────
     // Max attempts per window per IP on auth endpoints
