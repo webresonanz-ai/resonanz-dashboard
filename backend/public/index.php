@@ -2,19 +2,49 @@
 
 declare(strict_types=1);
 
+// ─── getallheaders() polyfill (Nginx/LiteSpeed + PHP-FPM) ────────────
+// getallheaders() only exists under Apache. On Hostinger (LiteSpeed) it is
+// undefined, which fatals EVERY request in Core\Request. Build it from $_SERVER.
+if (!function_exists('getallheaders')) {
+    function getallheaders(): array
+    {
+        $headers = [];
+        foreach ($_SERVER as $name => $value) {
+            if (str_starts_with($name, 'HTTP_')) {
+                $key = str_replace('_', '-', strtolower(substr($name, 5)));
+                $headers[$key] = $value;
+            } elseif ($name === 'CONTENT_TYPE') {
+                $headers['content-type'] = $value;
+            } elseif ($name === 'CONTENT_LENGTH') {
+                $headers['content-length'] = $value;
+            }
+        }
+        return $headers;
+    }
+}
+
 // ─── Load .env ────────────────────────────────────────────────
 $envFile = __DIR__ . '/../.env';
 if (file_exists($envFile)) {
     foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
         if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
         [$key, $value] = array_map('trim', explode('=', $line, 2));
+        // Strip surrounding quotes: DB_PASS="Resonanzwebsite28#" must yield
+        // Resonanzwebsite28# — otherwise the quotes become part of the
+        // password and the DB connection fails.
+        if (strlen($value) >= 2) {
+            $first = $value[0];
+            if (($first === '"' || $first === "'") && $value[-1] === $first) {
+                $value = substr($value, 1, -1);
+            }
+        }
         if (!isset($_ENV[$key])) { $_ENV[$key] = $value; putenv("{$key}={$value}"); }
     }
 }
 
 // ─── CORS — must run before everything ───────────────────────
 (function (): void {
-    $allowed = array_map('trim', explode(',', $_ENV['ALLOWED_ORIGINS'] ?? 'http://localhost:5173'));
+            $allowed = array_map('trim', explode(',', $_ENV['ALLOWED_ORIGINS'] ?? 'http://localhost:5173,http://localhost:5174,https://admin.resonanz.id,https://trms.resonanz.id'));
     $origin  = $_SERVER['HTTP_ORIGIN'] ?? '';
     if (in_array($origin, $allowed, true)) {
         header('Access-Control-Allow-Origin: ' . $origin);
@@ -33,6 +63,29 @@ error_reporting($debug ? E_ALL : 0);
 ini_set('display_errors', $debug ? '1' : '0');
 
 set_exception_handler(function (Throwable $e) use ($debug): void {
+    // Always log server-side (storage/logs is blocked from web access).
+    // With APP_DEBUG=false the client only sees a generic message, so this
+    // log is the only way to diagnose production 500s via File Manager.
+    try {
+        $logDir = __DIR__ . '/../storage/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+        $line = sprintf(
+            "[%s] %s %s :: %s: %s in %s:%d\n%s\n\n",
+            date('c'),
+            $_SERVER['REQUEST_METHOD'] ?? '?',
+            strtok($_SERVER['REQUEST_URI'] ?? '/', '?'),
+            $e::class,
+            $e->getMessage(),
+            $e->getFile(),
+            $e->getLine(),
+            $e->getTraceAsString()
+        );
+        @file_put_contents($logDir . '/app.log', $line, FILE_APPEND | LOCK_EX);
+    } catch (Throwable) {
+        // Logging must never break the error response itself
+    }
     http_response_code(500);
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode([
@@ -55,7 +108,7 @@ set_exception_handler(function (Throwable $e) use ($debug): void {
             // so they MUST carry CORS headers. The bootstrap CORS block above
             // already set them when Origin is allowed, but re-emit here to be
             // safe (e.g. direct <link> loads, cached preflights).
-            $allowed = array_map('trim', explode(',', $_ENV['ALLOWED_ORIGINS'] ?? 'http://localhost:5173'));
+    $allowed = array_map('trim', explode(',', $_ENV['ALLOWED_ORIGINS'] ?? 'http://localhost:5173,http://localhost:5174,https://admin.resonanz.id,https://trms.resonanz.id'));
             $origin  = $_SERVER['HTTP_ORIGIN'] ?? '';
             if (in_array($origin, $allowed, true)) {
                 header('Access-Control-Allow-Origin: ' . $origin);

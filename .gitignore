@@ -39,5 +39,6 @@ __screenshots__/
 *.timestamp-*-*.mjs
 
 /backend/public/uploads
+/backend/storage
 .vscode
 .env

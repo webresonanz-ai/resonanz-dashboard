@@ -1,0 +1,20 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. Serve real files and directories directly (images, assets, uploads, etc.)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # 2. Route /api/* to PHP backend
+    RewriteRule ^api/(.*)$ backend/public/index.php [L,QSA]
+
+    # 3. Route /uploads/* to backend public folder (for uploaded images)
+    RewriteRule ^uploads/(.*)$ backend/public/uploads/$1 [L]
+
+    # 4. SPA fallback — everything else goes to Vue
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+Options -MultiViews
+Options -Indexes
