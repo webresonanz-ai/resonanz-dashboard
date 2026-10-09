@@ -19,11 +19,25 @@ onMounted(() => { fetchEvents(); fetchTeachers(); fetchHome() })
 
 // ─── Home page overrides (admin-configurable, bilingual) ─────
 // Empty/missing setting → fall back to the built-in i18n default.
+// Neutral keys (images, numbers, font, JSON) are language-independent:
+// always read `en`, otherwise ID locale sees `id: ""` and wipes the value.
+const NEUTRAL_KEYS = new Set([
+  'hero_award_value',
+  'stat_students_value',
+  'stat_awards_value',
+  'hero_background_image',
+  'hero_side_image',
+  'site_font_family',
+  'site_font_url',
+  'features',
+])
 function setting(key) {
   const v = homeData.value?.[key]
   if (!v) return ''
+  if (typeof v === 'string') return v.trim()
+  if (NEUTRAL_KEYS.has(key)) return String(v.en ?? '').trim()
   const lang = locale.value === 'id' ? 'id' : 'en'
-  const s = v[lang] ?? v.en ?? ''
+  const s = v[lang] || v.en || ''
   return String(s ?? '').trim()
 }
 
@@ -73,9 +87,9 @@ const features = computed(() => {
     if (!Array.isArray(arr) || !arr.length) return defaultFeatures()
     const lang = locale.value === 'id' ? 'id' : 'en'
     return arr.slice(0, 6).map((f, i) => ({
-      title: String((lang === 'id' ? (f.title_id ?? f.title_en) : f.title_en) ?? '').trim()
+      title: String((lang === 'id' ? (f.title_id || f.title_en) : f.title_en) ?? '').trim()
              || t(`home.features.${i % 3}.title`),
-      desc: String((lang === 'id' ? (f.desc_id ?? f.desc_en) : f.desc_en) ?? '').trim()
+      desc: String((lang === 'id' ? (f.desc_id || f.desc_en) : f.desc_en) ?? '').trim()
             || t(`home.features.${i % 3}.desc`),
       icon: FEATURE_ICONS[i % FEATURE_ICONS.length],
     }))
