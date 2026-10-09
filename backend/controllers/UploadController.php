@@ -11,7 +11,7 @@ use Core\Response;
  * UploadController — handles admin image & font uploads.
  *
  * POST /api/admin/uploads  (multipart/form-data)
- *   Images: field "image", optional "folder" = events|home|facilities
+ *   Images: field "image", optional "folder" = events|home|facilities|teachers
  *           → { url: "/uploads/events/xxx.jpg" }
  *   Fonts:  field "font", "folder" = fonts  (.ttf/.otf/.woff/.woff2, max 10 MB)
  *           → { url: "/uploads/fonts/font_xxx.ttf" }
@@ -22,7 +22,7 @@ class UploadController
     private const MAX_FONT_BYTES  = 10 * 1024 * 1024; // 10 MB
     private const ALLOWED_IMG_EXT = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
     private const ALLOWED_FONT_EXT = ['ttf', 'otf', 'woff', 'woff2'];
-    private const ALLOWED_FOLDERS = ['events' => 'event_', 'home' => 'home_', 'facilities' => 'facility_', 'fonts' => 'font_'];
+    private const ALLOWED_FOLDERS = ['events' => 'event_', 'home' => 'home_', 'facilities' => 'facility_', 'teachers' => 'teacher_', 'fonts' => 'font_'];
 
     /** Magic-byte signatures per font extension */
     private const FONT_MAGIC = [
@@ -39,7 +39,7 @@ class UploadController
         // Target subfolder first (fonts = font files, anything else = images)
         $folder = strtolower(trim((string) ($req->input('folder') ?? 'events')));
         if (!array_key_exists($folder, self::ALLOWED_FOLDERS)) {
-            $res->error('Invalid folder. Allowed: events, home, facilities, fonts.', 422);
+            $res->error('Invalid folder. Allowed: events, home, facilities, teachers, fonts.', 422);
             return;
         }
 

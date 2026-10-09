@@ -43,6 +43,14 @@ const isFull = computed(() => {
   return cap != null && cap > 0 && count >= cap
 })
 
+const isPast = computed(() => {
+  const dt = String(event.value?.event_date ?? '').slice(0, 10)
+  if (!dt) return false
+  const d = new Date()
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return dt < today
+})
+
 const remaining = computed(() => {
   const cap = event.value?.max_capacity
   if (cap == null || !(cap > 0)) return null
@@ -171,7 +179,10 @@ function registerAnother() {
       <!-- Form -->
       <div v-else class="glass-card p-6 sm:p-8">
         <h2 class="text-lg font-semibold text-white mb-5">{{ $t('registration.formTitle') }}</h2>
-        <div v-if="isFull" class="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300 mb-5">
+        <div v-if="isPast" class="rounded-xl border border-gold-500/30 bg-gold-500/10 p-4 text-sm text-gold-300 mb-5">
+          {{ $t('registration.ended', 'This event has already ended.') }}
+        </div>
+        <div v-else-if="isFull" class="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300 mb-5">
           {{ $t('registration.full') }}
         </div>
         <form v-else @submit.prevent="submit" class="space-y-4">

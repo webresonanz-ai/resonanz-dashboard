@@ -50,6 +50,12 @@ class EventRegistrationController
             $res->error('Online registration is only available for Concert events.', 422);
             return;
         }
+        // Past events are no longer registrable (public list already hides them).
+        $eventDate = substr(trim((string) ($event['event_date'] ?? '')), 0, 10);
+        if ($eventDate !== '' && $eventDate < date('Y-m-d')) {
+            $res->error('This event has already ended.', 422);
+            return;
+        }
         if (!empty($event['use_registration_url']) && !empty($event['registration_url'])) {
             $res->error('This event uses an external registration link.', 422);
             return;

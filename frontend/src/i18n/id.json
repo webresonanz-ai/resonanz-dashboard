@@ -94,6 +94,7 @@
     "codeHint": "Setelah pendaftaran Anda akan menerima kode QR (EventCode_ID_Timestamp_Random). Tunjukkan di pintu masuk.",
     "seatsLeft": "tersisa {n} kursi",
     "full": "Pendaftaran penuh. Kapasitas maksimum telah tercapai.",
+    "ended": "Acara ini telah berakhir.",
     "successTitle": "Pendaftaran Berhasil!",
     "successText": "Terima kasih, {name}! Tunjukkan kode QR ini di pintu masuk.",
     "registerAnother": "Daftarkan tamu lain",

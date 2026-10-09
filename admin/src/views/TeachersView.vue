@@ -1,16 +1,36 @@
 <script setup>
 import { onMounted, ref, reactive, watch } from 'vue'
 import { useCrud } from '@/composables/useCrud'
+import { useAuthStore } from '@/stores/authStore'
 import PageHeader from '@/components/PageHeader.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { Plus, Pencil, Trash2, X, Loader2 } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, X, Loader2, ImagePlus, Link2, Upload } from 'lucide-vue-next'
 
+const auth = useAuthStore()
+const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const { items, loading, saving, deleting, fetchAll, create, update, remove } = useCrud('/api/admin/teachers')
 onMounted(fetchAll)
 
 const modal = ref(false); const isEdit = ref(false); const confirmId = ref(null)
-const form  = reactive({ id:null, name:'', role:'', bio:'', initials:'', email:'', is_active:1, sort_order:0 })
+const uploading = ref(false)
+const photoMode = ref('upload') // 'upload' | 'url'
+const photoFile = ref(null)
+const photoPreview = ref('')
+const photoFileInput = ref(null)
+const form  = reactive({ id:null, name:'', role:'', bio:'', initials:'', email:'', photo:'', is_active:1, sort_order:0 })
+
+function resolvePhoto(path) {
+  if (!path) return ''
+  const s = String(path).trim()
+  if (!s) return ''
+  return /^https?:\/\//i.test(s) ? s : `${API}${s.startsWith('/') ? s : `/${s}`}`
+}
+
+function emptyForm() {
+  return { id:null, name:'', role:'', bio:'', initials:'', email:'', photo:'', is_active:1, sort_order:0 }
+}
+function resetPhoto() { photoMode.value = 'upload'; photoFile.value = null; photoPreview.value = ''; if (photoFileInput.value) photoFileInput.value.value = '' }
 
 // Auto-generate initials from name
 watch(() => form.name, (v) => {
@@ -19,9 +39,63 @@ watch(() => form.name, (v) => {
   }
 })
 
-function openCreate() { Object.assign(form,{id:null,name:'',role:'',bio:'',initials:'',email:'',is_active:1,sort_order:0}); isEdit.value=false; modal.value=true }
-function openEdit(r)  { Object.assign(form,r); isEdit.value=true; modal.value=true }
-async function submit() { const {id,...d}=form; if(isEdit.value) await update(id,d); else await create(d); modal.value=false }
+function openCreate() { Object.assign(form, emptyForm()); resetPhoto(); isEdit.value=false; modal.value=true }
+function openEdit(r)  {
+  Object.assign(form, emptyForm(), r)
+  form.photo = form.photo ?? ''
+  photoFile.value = null
+  if (photoFileInput.value) photoFileInput.value.value = ''
+  const p = String(form.photo || '').trim()
+  photoPreview.value = resolvePhoto(p)
+  photoMode.value = /^https?:\/\//i.test(p) ? 'url' : 'upload'
+  isEdit.value=true; modal.value=true
+}
+function onPhotoFile(e) {
+  const f = e.target.files?.[0]
+  if (!f) return
+  if (!f.type.startsWith('image/')) { alert('Please choose an image file.'); return }
+  if (f.size > 5 * 1024 * 1024) { alert('Image too large. Max 5 MB.'); return }
+  photoFile.value = f
+  photoMode.value = 'upload'
+  if (photoPreview.value.startsWith('blob:')) URL.revokeObjectURL(photoPreview.value)
+  photoPreview.value = URL.createObjectURL(f)
+}
+function clearPhoto() {
+  photoFile.value = null
+  photoPreview.value = ''
+  form.photo = ''
+  if (photoFileInput.value) photoFileInput.value.value = ''
+}
+async function uploadPhotoFile() {
+  const fd = new FormData()
+  fd.append('image', photoFile.value)
+  fd.append('folder', 'teachers')
+  const json = await auth.apiFetch('/api/admin/uploads', { method: 'POST', body: fd })
+  return json.data?.url ?? null
+}
+async function submit() {
+  const {id,...d}=form
+  try {
+    if (photoMode.value === 'upload') {
+      if (photoFile.value) {
+        uploading.value = true
+        const url = await uploadPhotoFile()
+        uploading.value = false
+        if (!url) return
+        d.photo = url
+      } else {
+        d.photo = (d.photo || '').trim() || null
+      }
+    } else {
+      d.photo = (d.photo || '').trim() || null
+    }
+    if(isEdit.value) await update(id,d); else await create(d)
+    modal.value=false
+  } catch {
+    uploading.value = false
+    // useCrud / apiFetch already shows a toast — keep modal open so input isn't lost
+  }
+}
 async function confirmDelete() { await remove(confirmId.value); confirmId.value=null }
 </script>
 
@@ -42,7 +116,8 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
             <tr v-for="row in items" :key="row.id">
               <td>
                 <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-gray-950 font-bold text-xs font-serif shrink-0">{{ row.initials }}</div>
+                  <img v-if="row.photo" :src="resolvePhoto(row.photo)" alt="" class="w-9 h-9 rounded-lg object-cover border border-white/10 shrink-0" loading="lazy" />
+                  <div v-else class="w-9 h-9 rounded-lg bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-gray-950 font-bold text-xs font-serif shrink-0">{{ row.initials }}</div>
                   <span class="font-medium text-white">{{ row.name }}</span>
                 </div>
               </td>
@@ -76,6 +151,25 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
                 <div><label class="form-label">Role / Instrument</label><input v-model="form.role" required class="form-input" placeholder="Piano · Department Head"/></div>
                 <div><label class="form-label">Email</label><input v-model="form.email" type="email" class="form-input" placeholder="teacher@resonanz.org"/></div>
                 <div><label class="form-label">Bio</label><textarea v-model="form.bio" required rows="3" class="form-input resize-none" placeholder="Short biography…"></textarea></div>
+                <div class="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+                  <label class="form-label">Photo (optional)</label>
+                  <div class="flex gap-2">
+                    <button type="button" class="btn-secondary flex-1" :class="{ '!border-gold-400 !text-gold-300': photoMode === 'upload' }" @click="photoMode = 'upload'"><Upload class="w-4 h-4"/>Upload</button>
+                    <button type="button" class="btn-secondary flex-1" :class="{ '!border-gold-400 !text-gold-300': photoMode === 'url' }" @click="photoMode = 'url'"><Link2 class="w-4 h-4"/>Image URL</button>
+                  </div>
+                  <div v-if="photoMode === 'upload'">
+                    <input ref="photoFileInput" type="file" accept="image/*" class="form-input" @change="onPhotoFile" />
+                    <p class="text-xs text-gray-500 mt-1">JPG, PNG, WebP or GIF — max 5 MB. Square photos look best.</p>
+                  </div>
+                  <div v-else>
+                    <input v-model="form.photo" type="url" placeholder="https://example.com/teacher.jpg" class="form-input" @input="photoPreview = resolvePhoto(form.photo)" />
+                  </div>
+                  <div v-if="photoPreview" class="relative">
+                    <img :src="photoPreview" alt="Photo preview" class="w-24 h-24 rounded-full object-cover border border-white/10 mx-auto" />
+                    <button type="button" class="btn-icon absolute top-0 right-1/3 !bg-black/60" @click="clearPhoto"><Trash2 class="w-4 h-4"/></button>
+                  </div>
+                  <div v-else class="flex items-center gap-2 text-xs text-gray-500"><ImagePlus class="w-4 h-4"/>No photo — guest page shows initials.</div>
+                </div>
                 <div class="grid grid-cols-2 gap-4">
                   <div><label class="form-label">Sort Order</label><input v-model.number="form.sort_order" type="number" class="form-input"/></div>
                   <div><label class="form-label">Status</label><select v-model.number="form.is_active" class="form-select"><option :value="1">Active</option><option :value="0">Hidden</option></select></div>
@@ -83,7 +177,7 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn-secondary" @click="modal=false">Cancel</button>
-                <button type="submit" class="btn-primary" :disabled="saving"><Loader2 v-if="saving" class="w-4 h-4 animate-spin"/>{{ saving ? 'Saving…' : 'Save' }}</button>
+                <button type="submit" class="btn-primary" :disabled="saving || uploading"><Loader2 v-if="saving || uploading" class="w-4 h-4 animate-spin"/>{{ uploading ? 'Uploading…' : saving ? 'Saving…' : 'Save' }}</button>
               </div>
             </form>
           </div>

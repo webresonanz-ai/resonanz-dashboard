@@ -126,7 +126,9 @@ class EventController extends ResourceController
 
     public function publicIndex(Request $req, Response $res): void
     {
-        $res->success($this->allWithCounts('e.is_active = 1'), 'OK');
+        // Public listing = upcoming only. Past events (event_date < today)
+        // are auto-hidden, not deleted — admin `index()` still sees all.
+        $res->success($this->allWithCounts('e.is_active = 1 AND e.event_date >= CURDATE()'), 'OK');
     }
 
     public function publicShow(Request $req, Response $res, array $params): void

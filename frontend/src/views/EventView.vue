@@ -15,7 +15,19 @@ const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const { data, loading, error, fetch } = useApi('/api/events')
 onMounted(fetch)
 
-const events = computed(() => data.value ?? [])
+const events = computed(() => {
+  // Upcoming only: auto-hide past events (event_date < today).
+  // Backend already filters, this is a client-side guard for cache/timezone.
+  const d = new Date()
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return (data.value ?? [])
+    .filter((e) => {
+      const dt = String(e?.event_date ?? '').slice(0, 10)
+      if (!dt) return true
+      return dt >= today
+    })
+    .sort((a, b) => String(a?.event_date ?? '').localeCompare(String(b?.event_date ?? '')))
+})
 
 function resolveCover(e) {
   const raw = e?.cover_image ?? ''

@@ -94,6 +94,7 @@
     "codeHint": "After registration you will receive a QR code (EventCode_ID_Timestamp_Random). Show it at the entrance.",
     "seatsLeft": "{n} seats left",
     "full": "Registration is full. Maximum capacity has been reached.",
+    "ended": "This event has already ended.",
     "successTitle": "Registration Successful!",
     "successText": "Thank you, {name}! Show this QR code at the entrance.",
     "registerAnother": "Register another guest",

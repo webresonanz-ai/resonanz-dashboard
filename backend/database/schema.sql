@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS `teachers` (
     `bio`        TEXT         NOT NULL,
     `initials`   VARCHAR(4)   NOT NULL,
     `email`      VARCHAR(255) NULL,
+    `photo`      VARCHAR(500) NULL,
     `is_active`  TINYINT(1)   NOT NULL DEFAULT 1,
     `sort_order` TINYINT UNSIGNED NOT NULL DEFAULT 0,
     `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

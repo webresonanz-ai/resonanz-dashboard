@@ -6,10 +6,19 @@ import { useApi } from '@/composables/useApi'
 
 useScrollReveal()
 
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+
 const { data, loading, error, fetch } = useApi('/api/teachers')
 onMounted(fetch)
 
 const teachers = computed(() => data.value ?? [])
+
+function resolvePhoto(t) {
+  const raw = t?.photo ?? ''
+  const s = String(raw).trim()
+  if (!s) return ''
+  return /^https?:\/\//i.test(s) ? s : `${API_BASE}${s.startsWith('/') ? s : `/${s}`}`
+}
 </script>
 
 <template>
@@ -75,9 +84,12 @@ const teachers = computed(() => data.value ?? [])
           <div class="absolute inset-0 rounded-full border-2 border-dashed border-gold-500/20
                       group-hover:border-gold-500/50 transition-all duration-500"
                style="animation: spin-slow 12s linear infinite;"></div>
-          <div class="relative w-full h-full rounded-full bg-gold-gradient flex items-center justify-center
+          <div class="relative w-full h-full rounded-full overflow-hidden bg-gold-gradient flex items-center justify-center
                       shadow-gold group-hover:shadow-gold-lg transition-all duration-300 group-hover:scale-105">
-            <span class="text-2xl font-serif font-bold text-maroon-950">{{ t.initials }}</span>
+            <img v-if="resolvePhoto(t)" :src="resolvePhoto(t)" :alt="t.name" loading="lazy"
+                 class="absolute inset-0 w-full h-full object-cover"
+                 @error="$event.target.style.display = 'none'" />
+            <span v-else class="text-2xl font-serif font-bold text-maroon-950">{{ t.initials }}</span>
           </div>
         </div>
 
