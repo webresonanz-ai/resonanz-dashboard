@@ -6,13 +6,15 @@ const toast = useToastStore()
 
 <template>
   <teleport to="body">
-    <div class="fixed bottom-6 right-6 z-[100] space-y-2 pointer-events-none">
+    <div class="fixed bottom-4 left-4 right-4 z-[100] space-y-2 pointer-events-none sm:bottom-6 sm:left-auto sm:right-6 sm:w-96">
       <transition-group name="slide-up" tag="div" class="space-y-2">
         <div
           v-for="t in toast.toasts"
           :key="t.id"
           class="toast pointer-events-auto"
           :class="t.type === 'success' ? 'toast-success' : 'toast-error'"
+          :role="t.type === 'error' ? 'alert' : 'status'"
+          aria-live="polite"
         >
           <CheckCircle v-if="t.type === 'success'" class="w-4 h-4 shrink-0" />
           <XCircle     v-else                       class="w-4 h-4 shrink-0" />

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import {
@@ -11,12 +11,35 @@ const auth   = useAuthStore()
 const route  = useRoute()
 const router = useRouter()
 const sidebarOpen = ref(true)
+const isMobile = ref(false)
+const mobileQuery = window.matchMedia('(max-width: 767px)')
+
+function syncViewport() {
+  isMobile.value = mobileQuery.matches
+  if (isMobile.value) sidebarOpen.value = false
+}
+
+function toggleSidebar() {
+  sidebarOpen.value = !sidebarOpen.value
+}
+
+function navigate() {
+  if (isMobile.value) sidebarOpen.value = false
+}
+
+onMounted(() => {
+  syncViewport()
+  mobileQuery.addEventListener('change', syncViewport)
+})
+
+onUnmounted(() => mobileQuery.removeEventListener('change', syncViewport))
 
 const nav = [
   { name: 'Dashboard',    to: '/',           icon: LayoutDashboard },
   { name: 'Home Page',    to: '/home',       icon: House },
   { name: 'Schedule',     to: '/schedule',   icon: Calendar },
   { name: 'Events',      to: '/events',    icon: Music },
+  { name: 'Audiences',   to: '/audiences', icon: Users },
   { name: 'News',         to: '/news',       icon: Newspaper },
   { name: 'Courses',      to: '/courses',    icon: BookOpen },
   { name: 'Facilities',   to: '/facilities', icon: Building2 },
@@ -26,10 +49,11 @@ const nav = [
 ]
 
 const pageTitle = computed(() => nav.find(n => n.to === route.path)?.name ?? 'Admin')
+const userName = computed(() => auth.user?.name || 'Administrator')
 
 async function handleLogout() {
   await auth.logout()
-  router.push('/login')
+  await router.push('/login')
 }
 </script>
 
@@ -38,8 +62,8 @@ async function handleLogout() {
 
     <!-- ─── Sidebar ─── -->
     <aside
-      class="flex flex-col bg-gray-900 border-r border-white/8 transition-all duration-300 shrink-0"
-      :class="sidebarOpen ? 'w-60' : 'w-16'"
+      class="fixed inset-y-0 left-0 z-40 flex w-60 flex-col bg-gray-900 border-r border-white/8 transition-all duration-300 shrink-0 md:relative md:translate-x-0"
+      :class="sidebarOpen ? 'translate-x-0 md:w-60' : '-translate-x-full md:translate-x-0 md:w-16'"
     >
       <!-- Logo -->
       <div class="flex items-center gap-3 px-4 h-16 border-b border-white/8 shrink-0">
@@ -56,7 +80,7 @@ async function handleLogout() {
       </div>
 
       <!-- Nav -->
-      <nav class="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
+      <nav id="admin-navigation" class="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
         <RouterLink
           v-for="item in nav"
           :key="item.to"
@@ -64,6 +88,8 @@ async function handleLogout() {
           class="nav-link"
           :class="{ 'active': route.path === item.to }"
           :title="!sidebarOpen ? item.name : undefined"
+          :aria-current="route.path === item.to ? 'page' : undefined"
+          @click="navigate"
         >
           <component :is="item.icon" class="w-4.5 h-4.5 w-[18px] h-[18px] shrink-0" />
           <transition name="fade">
@@ -86,16 +112,30 @@ async function handleLogout() {
         </button>
       </div>
     </aside>
+    <button
+      v-if="isMobile && sidebarOpen"
+      type="button"
+      class="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden"
+      aria-label="Close navigation"
+      @click="sidebarOpen = false"
+    ></button>
 
     <!-- ─── Main ─── -->
     <div class="flex flex-col flex-1 overflow-hidden">
 
       <!-- Topbar -->
-      <header class="flex items-center justify-between h-16 px-6 border-b border-white/8 bg-gray-900/60 backdrop-blur-sm shrink-0">
+      <header class="flex items-center justify-between h-16 px-4 sm:px-6 border-b border-white/8 bg-gray-900/60 backdrop-blur-sm shrink-0">
         <div class="flex items-center gap-4">
-          <button @click="sidebarOpen = !sidebarOpen" class="btn-icon">
-            <X    v-if="sidebarOpen" class="w-5 h-5" />
-            <Menu v-else             class="w-5 h-5" />
+          <button
+            type="button"
+            @click="toggleSidebar"
+            class="btn-icon"
+            :aria-label="sidebarOpen ? (isMobile ? 'Close navigation' : 'Collapse navigation') : 'Open navigation'"
+            :aria-expanded="sidebarOpen"
+            aria-controls="admin-navigation"
+          >
+            <X v-if="sidebarOpen" class="w-5 h-5" />
+            <Menu v-else class="w-5 h-5" />
           </button>
           <!-- Breadcrumb -->
           <div class="flex items-center gap-1.5 text-sm text-gray-400">
@@ -106,20 +146,20 @@ async function handleLogout() {
         </div>
 
         <!-- User pill -->
-        <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-2.5 min-w-0">
           <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-gold-400 to-gold-600
                       flex items-center justify-center text-gray-950 font-bold text-xs font-serif">
             {{ auth.userInitials }}
           </div>
           <div class="hidden sm:block text-right">
-            <p class="text-xs font-semibold text-white leading-none">{{ auth.user?.name }}</p>
+            <p class="text-xs font-semibold text-white leading-none truncate max-w-40">{{ userName }}</p>
             <p class="text-[10px] text-gold-400 mt-0.5 capitalize">{{ auth.user?.role }}</p>
           </div>
         </div>
       </header>
 
       <!-- Page content -->
-      <main class="flex-1 overflow-y-auto p-6">
+      <main class="flex-1 overflow-y-auto p-4 sm:p-6">
         <RouterView v-slot="{ Component }">
           <transition name="slide-up" mode="out-in">
             <component :is="Component" :key="route.path" />

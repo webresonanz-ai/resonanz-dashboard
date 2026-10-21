@@ -209,6 +209,21 @@ class EventRegistrationController
         $res->success(['event' => $event, 'registrations' => $rows], 'OK');
     }
 
+    // ─── ADMIN: list audiences across all internally registered concerts ─
+    public function adminAudienceIndex(Request $req, Response $res, array $params): void
+    {
+        $stmt = $this->db->prepare(
+            'SELECT r.id, r.event_id, r.name, r.email, r.phone, r.registration_code, r.created_at,
+                    e.title AS event_title, e.event_date, e.event_time, e.venue, e.event_code
+             FROM `event_registrations` r
+             INNER JOIN `events` e ON e.id = r.event_id
+             WHERE e.type = :type AND COALESCE(e.use_registration_url, 0) = 0
+             ORDER BY e.event_date DESC, e.event_time DESC, r.created_at DESC'
+        );
+        $stmt->execute(['type' => 'Concert']);
+        $res->success($stmt->fetchAll(), 'OK');
+    }
+
     // ─── ADMIN: delete a registration ──────────────────────────────
     public function adminDestroy(Request $req, Response $res, array $params): void
     {
