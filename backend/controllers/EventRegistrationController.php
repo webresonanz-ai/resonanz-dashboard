@@ -213,7 +213,7 @@ class EventRegistrationController
     public function adminAudienceIndex(Request $req, Response $res, array $params): void
     {
         $stmt = $this->db->prepare(
-            'SELECT r.id, r.event_id, r.name, r.email, r.phone, r.registration_code, r.created_at,
+            'SELECT r.id, r.event_id, r.name, r.email, r.phone, r.registration_code, r.created_at, r.checked_in_at,
                     e.title AS event_title, e.event_date, e.event_time, e.venue, e.event_code
              FROM `event_registrations` r
              INNER JOIN `events` e ON e.id = r.event_id
@@ -222,6 +222,80 @@ class EventRegistrationController
         );
         $stmt->execute(['type' => 'Concert']);
         $res->success($stmt->fetchAll(), 'OK');
+    }
+
+    // ─── ADMIN: check in a ticket once, using its indexed registration code ─
+    public function adminCheckIn(Request $req, Response $res, array $params): void
+    {
+        $code = (string) $req->input('code', '');
+        $stmt = $this->db->prepare(
+            'SELECT r.id, r.event_id, r.name, r.email, r.phone, r.registration_code,
+                    r.checked_in_at, e.type AS event_type, e.use_registration_url, e.title AS event_title,
+                    e.event_date, e.event_time, e.venue
+             FROM `event_registrations` r
+             INNER JOIN `events` e ON e.id = r.event_id
+             WHERE r.registration_code = :code
+             LIMIT 1'
+        );
+        $stmt->execute(['code' => $code]);
+        $registration = $stmt->fetch();
+
+        if (!$registration) {
+            $res->error('Ticket not found. Check the QR code and try again.', 404);
+            return;
+        }
+
+        if (($registration['event_type'] ?? '') !== 'Concert' || (int) ($registration['use_registration_url'] ?? 0) === 1) {
+            $res->error('This ticket is not valid for concert check-in.', 422);
+            return;
+        }
+
+        $checkedInAt = $registration['checked_in_at'];
+        if ($checkedInAt === null) {
+            $update = $this->db->prepare(
+                'UPDATE `event_registrations`
+                 SET checked_in_at = CURRENT_TIMESTAMP
+                 WHERE id = :id AND checked_in_at IS NULL'
+            );
+            $update->execute(['id' => $registration['id']]);
+
+            $refresh = $this->db->prepare(
+                'SELECT checked_in_at FROM `event_registrations` WHERE id = :id LIMIT 1'
+            );
+            $refresh->execute(['id' => $registration['id']]);
+            $checkedInAt = $refresh->fetchColumn();
+            if (!$checkedInAt) {
+                $res->error('Ticket not found. It may have been removed; please scan again.', 404);
+                return;
+            }
+
+            $isFirstCheckIn = $update->rowCount() === 1;
+            $status = $isFirstCheckIn ? 'checked_in' : 'already_checked_in';
+            $message = $isFirstCheckIn
+                ? 'Check-in successful.'
+                : 'This audience member has already checked in.';
+        } else {
+            $status = 'already_checked_in';
+            $message = 'This audience member has already checked in.';
+        }
+
+        $res->success([
+            'status' => $status,
+            'checked_in_at' => $checkedInAt,
+            'audience' => [
+                'id' => (int) $registration['id'],
+                'name' => $registration['name'],
+                'email' => $registration['email'],
+                'registration_code' => $registration['registration_code'],
+            ],
+            'event' => [
+                'id' => (int) $registration['event_id'],
+                'title' => $registration['event_title'],
+                'event_date' => $registration['event_date'],
+                'event_time' => $registration['event_time'],
+                'venue' => $registration['venue'],
+            ],
+        ], $message);
     }
 
     // ─── ADMIN: delete a registration ──────────────────────────────

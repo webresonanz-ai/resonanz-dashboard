@@ -15,6 +15,7 @@ const router = createRouter({
         { path: 'schedule',  name: 'schedule',     component: () => import('@/views/ScheduleView.vue') },
         { path: 'events',    name: 'events',       component: () => import('@/views/EventsView.vue') },
         { path: 'audiences', name: 'audiences',    component: () => import('@/views/AudiencesView.vue') },
+        { path: 'check-in',  name: 'check-in',     component: () => import('@/views/CheckInView.vue') },
         { path: 'news',      name: 'news',         component: () => import('@/views/NewsView.vue') },
         { path: 'courses',   name: 'courses',      component: () => import('@/views/CoursesView.vue') },
         { path: 'facilities',name: 'facilities',   component: () => import('@/views/FacilitiesView.vue') },

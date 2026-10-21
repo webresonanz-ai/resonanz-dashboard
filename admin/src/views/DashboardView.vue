@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import PageHeader from '@/components/PageHeader.vue'
-import { Calendar, Music, Newspaper, BookOpen, Building2, Users, Mail, House } from 'lucide-vue-next'
+import { Calendar, Music, Newspaper, BookOpen, Building2, Users, Mail, House, ScanQrCode } from 'lucide-vue-next'
 
 const auth  = useAuthStore()
 const stats = ref([])
@@ -14,6 +14,7 @@ const modules = [
   { name: 'Schedule',   to: '/schedule',   icon: Calendar,   color: 'from-blue-500/20 to-blue-600/10',   border: 'border-blue-500/20' },
   { name: 'Events',     to: '/events',     icon: Music,      color: 'from-purple-500/20 to-purple-600/10', border: 'border-purple-500/20' },
   { name: 'Audiences',  to: '/audiences',  icon: Users,      color: 'from-violet-500/20 to-violet-600/10', border: 'border-violet-500/20', description: 'View concert registrations' },
+  { name: 'Check-in',  to: '/check-in',   icon: ScanQrCode, color: 'from-teal-500/20 to-teal-600/10', border: 'border-teal-500/20', description: 'Scan tickets at the entrance' },
   { name: 'News',       to: '/news',       icon: Newspaper,  color: 'from-emerald-500/20 to-emerald-600/10', border: 'border-emerald-500/20' },
   { name: 'Courses',    to: '/courses',    icon: BookOpen,   color: 'from-gold-500/20 to-gold-600/10',    border: 'border-gold-500/20' },
   { name: 'Facilities', to: '/facilities', icon: Building2,  color: 'from-cyan-500/20 to-cyan-600/10',    border: 'border-cyan-500/20' },

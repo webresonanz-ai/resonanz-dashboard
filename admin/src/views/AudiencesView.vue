@@ -120,6 +120,7 @@ onMounted(loadAudiences)
               <th>Email</th>
               <th>Phone</th>
               <th>Registration Code</th>
+              <th>Check-in</th>
               <th>Registered</th>
             </tr>
           </thead>
@@ -133,6 +134,10 @@ onMounted(loadAudiences)
               <td class="text-xs text-gray-400">{{ audience.email }}</td>
               <td class="text-xs text-gray-400">{{ audience.phone }}</td>
               <td class="font-mono text-xs text-gold-300">{{ audience.registration_code || '—' }}</td>
+              <td>
+                <span v-if="audience.checked_in_at" class="badge badge-green">Checked in</span>
+                <span v-else class="badge badge-gray">Not checked in</span>
+              </td>
               <td class="text-xs text-gray-500">{{ formatDate(audience.created_at) }}</td>
             </tr>
           </tbody>

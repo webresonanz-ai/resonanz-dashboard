@@ -177,10 +177,12 @@ CREATE TABLE IF NOT EXISTS `event_registrations` (
     `email`             VARCHAR(255) NOT NULL,
     `phone`             VARCHAR(30)  NOT NULL,
     `registration_code` VARCHAR(100) NULL,
+    `checked_in_at`     DATETIME     NULL,
     `created_at`        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_event_reg_code` (`registration_code`),
     INDEX `idx_event_reg_event` (`event_id`),
+    INDEX `idx_event_reg_event_checkin` (`event_id`, `checked_in_at`),
     INDEX `idx_event_reg_email` (`event_id`, `email`),
     CONSTRAINT `fk_event_reg_event` FOREIGN KEY (`event_id`)
         REFERENCES `events` (`id`) ON DELETE CASCADE
