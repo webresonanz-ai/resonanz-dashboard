@@ -271,6 +271,14 @@ $r->post('/api/admin/registrations/check-in', [$eventReg, 'adminCheckIn'], [
     $adminMw,
     ValidationMiddleware::make(['code' => 'required|max:100']),
 ]);
+$r->put('/api/admin/registrations/:id', [$eventReg, 'adminUpdate'], [
+    $adminMw,
+    ValidationMiddleware::make([
+        'name' => 'required|min:2|max:100',
+        'email' => 'required|email|max:255',
+        'phone' => 'required|min:5|max:30',
+    ]),
+]);
 $r->delete('/api/admin/registrations/:id', [$eventReg, 'adminDestroy'], [$adminMw]);
 $r->post('/api/admin/registrations/:id/send-ticket', [$eventReg, 'adminSendTicket'], [$adminMw, $rl]);
 

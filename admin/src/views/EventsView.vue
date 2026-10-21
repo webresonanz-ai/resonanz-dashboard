@@ -58,7 +58,9 @@ const coverMode = ref('upload') // 'upload' | 'url'
 const coverFile = ref(null)
 const coverPreview = ref('')
 const coverFileInput = ref(null)
-const form  = reactive({ id:null, title:'', event_date:'', event_time:'19:00', venue:'', type:'Concert', event_code:'', max_capacity:'', use_registration_url:0, registration_url:'', cover_image:'', tag:'', is_active:1 })
+const ticketTemplateFile = ref(null)
+const ticketTemplateInput = ref(null)
+const form  = reactive({ id:null, title:'', event_date:'', event_time:'19:00', venue:'', type:'Concert', event_code:'', max_capacity:'', use_registration_url:0, registration_url:'', ticket_template_path:'', cover_image:'', tag:'', is_active:1 })
 
 function resolveCover(path) {
   if (!path) return ''
@@ -68,7 +70,7 @@ function resolveCover(path) {
 }
 
 function emptyForm() {
-  return { id:null, title:'', event_date:'', event_time:'19:00', venue:'', type:'Concert', event_code:'', max_capacity:'', use_registration_url:0, registration_url:'', cover_image:'', tag:'', is_active:1 }
+  return { id:null, title:'', event_date:'', event_time:'19:00', venue:'', type:'Concert', event_code:'', max_capacity:'', use_registration_url:0, registration_url:'', ticket_template_path:'', cover_image:'', tag:'', is_active:1 }
 }
 function resetCover() { coverMode.value = 'upload'; coverFile.value = null; coverPreview.value = ''; if (coverFileInput.value) coverFileInput.value.value = '' }
 function openCreate() { Object.assign(form, emptyForm()); resetCover(); isEdit.value=false; modal.value=true }
@@ -82,10 +84,13 @@ function openEdit(r)  {
   form.event_code = (form.event_code ?? '').toString().toUpperCase()
   form.max_capacity = form.max_capacity ?? ''
   form.cover_image = form.cover_image ?? ''
+  form.ticket_template_path = form.ticket_template_path ?? ''
   form.is_active = form.is_active ? 1 : 0
   // cover preview state
   coverFile.value = null
+  ticketTemplateFile.value = null
   if (coverFileInput.value) coverFileInput.value.value = ''
+  if (ticketTemplateInput.value) ticketTemplateInput.value.value = ''
   const c = String(form.cover_image || '').trim()
   coverPreview.value = resolveCover(c)
   coverMode.value = /^https?:\/\//i.test(c) ? 'url' : 'upload'
@@ -93,7 +98,16 @@ function openEdit(r)  {
 }
 function onTypeChange() {
   // Clear URL fields when not a Concert
-  if (form.type !== 'Concert') { form.use_registration_url = 0; form.registration_url = ''; form.event_code = ''; form.max_capacity = '' }
+  if (form.type !== 'Concert') {
+    form.use_registration_url = 0
+    form.registration_url = ''
+    form.event_code = ''
+    form.max_capacity = ''
+    clearTicketTemplate()
+  }
+}
+function onRegistrationTypeChange() {
+  if (form.use_registration_url) clearTicketTemplate()
 }
 function onEventCodeInput() {
   form.event_code = (form.event_code ?? '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20)
@@ -119,6 +133,39 @@ async function uploadCoverFile() {
   fd.append('image', coverFile.value)
   const json = await auth.apiFetch('/api/admin/uploads', { method: 'POST', body: fd })
   return json.data?.url ?? null
+}
+function onTicketTemplateFile(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (!file.name.toLowerCase().endsWith('.pdf')) {
+    toast.error('Please choose a PDF ticket template.')
+    e.target.value = ''
+    return
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    toast.error('Ticket template too large. Max 10 MB.')
+    e.target.value = ''
+    return
+  }
+  ticketTemplateFile.value = file
+  form.ticket_template_path = ''
+}
+function clearTicketTemplate() {
+  ticketTemplateFile.value = null
+  form.ticket_template_path = ''
+  if (ticketTemplateInput.value) ticketTemplateInput.value.value = ''
+}
+async function uploadTicketTemplate() {
+  const fd = new FormData()
+  fd.append('folder', 'ticket-templates')
+  fd.append('pdf', ticketTemplateFile.value)
+  try {
+    const json = await auth.apiFetch('/api/admin/uploads', { method: 'POST', body: fd })
+    return json.data?.url ?? null
+  } catch (error) {
+    toast.error(error.message ?? 'Could not upload ticket template.')
+    throw error
+  }
 }
 async function submit() {
   const { id, ...d } = form
@@ -154,6 +201,20 @@ async function submit() {
       }
     } else {
       d.cover_image = (d.cover_image || '').trim() || null
+    }
+    if (isInternal && ticketTemplateFile.value) {
+      uploading.value = true
+      const templatePath = await uploadTicketTemplate()
+      uploading.value = false
+      if (!templatePath) {
+        toast.error('Ticket template upload did not return a file path.')
+        return
+      }
+      d.ticket_template_path = templatePath
+    } else if (!isInternal) {
+      d.ticket_template_path = null
+    } else {
+      d.ticket_template_path = (d.ticket_template_path || '').trim() || null
     }
     if (isEdit.value) await update(id, d); else await create(d)
     modal.value = false
@@ -241,7 +302,7 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
                 </div>
                 <div v-if="form.type === 'Concert'" class="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
                   <label class="flex items-center gap-2.5 text-sm text-gray-300 cursor-pointer select-none">
-                    <input v-model="form.use_registration_url" type="checkbox" :true-value="1" :false-value="0" class="w-4 h-4 accent-yellow-500" />
+                    <input v-model="form.use_registration_url" type="checkbox" :true-value="1" :false-value="0" class="w-4 h-4 accent-yellow-500" @change="onRegistrationTypeChange" />
                     Use external URL for registration
                   </label>
                   <div v-if="form.use_registration_url">
@@ -261,6 +322,36 @@ async function confirmDelete() { await remove(confirmId.value); confirmId.value=
                       <p class="text-xs text-gray-500 mt-1">Empty = unlimited seats.</p>
                     </div>
                   </div>
+                </div>
+                <div v-if="form.type === 'Concert' && !form.use_registration_url" class="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+                  <div>
+                    <label class="form-label">Ticket PDF template (optional)</label>
+                    <p class="text-xs text-gray-500">
+                      Upload a single-page PDF background. The QR code is placed near the page center (38% from top) and the audience name below it (72% from top). Leave clear space in those areas.
+                    </p>
+                  </div>
+                  <input
+                    ref="ticketTemplateInput"
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    class="form-input"
+                    @change="onTicketTemplateFile"
+                  />
+                  <div v-if="ticketTemplateFile" class="flex items-center justify-between gap-3 text-xs text-gray-300">
+                    <span class="truncate">{{ ticketTemplateFile.name }}</span>
+                    <button type="button" class="btn-icon hover:text-red-400" aria-label="Remove selected ticket template" @click="clearTicketTemplate">
+                      <Trash2 class="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div v-else-if="form.ticket_template_path" class="flex items-center justify-between gap-3 text-xs">
+                    <a :href="resolveCover(form.ticket_template_path)" target="_blank" rel="noopener noreferrer" class="text-gold-300 hover:underline truncate">
+                      View current PDF template
+                    </a>
+                    <button type="button" class="btn-icon hover:text-red-400" aria-label="Remove current ticket template" @click="clearTicketTemplate">
+                      <Trash2 class="w-4 h-4" />
+                    </button>
+                  </div>
+                  <p v-else class="text-xs text-gray-500">Without a template, tickets use the standard email layout.</p>
                 </div>
                 <div class="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
                   <label class="form-label">Cover image (optional)</label>

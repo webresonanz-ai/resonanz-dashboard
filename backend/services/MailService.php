@@ -54,7 +54,7 @@ class MailService
      * Build and send the event ticket email.
      *
      * @param array{to:string,name:string} $guest
-     * @param array{title:string,event_date:string,event_time:string,venue:string,event_code:string} $event
+     * @param array{title:string,event_date:string,event_time:string,venue:string,event_code:string,ticket_template_path?:?string} $event
      */
     public function sendTicket(array $guest, array $event, string $registrationCode): bool
     {
@@ -101,12 +101,33 @@ class MailService
             . "Ticket code: {$registrationCode}\n\n"
             . "Please show this code (or its QR code) at the entrance.\n";
 
-        return $this->send($to, $subject, $html, $text);
+        $attachment = null;
+        if (!empty($event['ticket_template_path'])) {
+            try {
+                $pdf = (new TicketPdfService())->generate(
+                    (string) $event['ticket_template_path'],
+                    $name,
+                    $registrationCode
+                );
+            } catch (\Throwable $e) {
+                $this->lastError = 'Could not generate ticket PDF: ' . $e->getMessage();
+                return false;
+            }
+
+            $filename = preg_replace('/[^A-Za-z0-9_-]+/', '-', $title) ?: 'concert';
+            $attachment = [
+                'filename' => 'ticket-' . trim($filename, '-') . '.pdf',
+                'content' => $pdf,
+                'content_type' => 'application/pdf',
+            ];
+        }
+
+        return $this->send($to, $subject, $html, $text, $attachment);
     }
 
     // ─── SMTP plumbing ──────────────────────────────────────────
 
-    public function send(string $to, string $subject, string $html, string $text = ''): bool
+    public function send(string $to, string $subject, string $html, string $text = '', ?array $attachment = null): bool
     {
         $user = self::username();
         $pass = self::password();
@@ -142,22 +163,40 @@ class MailService
             $this->cmd($sock, 'DATA', 354);
 
             $boundary = 'rz_' . bin2hex(random_bytes(12));
+            $alternativeBoundary = 'rz_alt_' . bin2hex(random_bytes(12));
             $headers = [
                 "From: Resonanz Music Foundation <{$from}>",
                 "To: <{$to}>",
                 'Subject: ' . $this->encodeHeader($subject),
                 'MIME-Version: 1.0',
-                "Content-Type: multipart/alternative; boundary=\"{$boundary}\"",
+                $attachment === null
+                    ? "Content-Type: multipart/alternative; boundary=\"{$boundary}\""
+                    : "Content-Type: multipart/mixed; boundary=\"{$boundary}\"",
             ];
-            $body = "--{$boundary}\r\n"
+            $alternativeBody = "--{$alternativeBoundary}\r\n"
                 . "Content-Type: text/plain; charset=UTF-8\r\n"
                 . "Content-Transfer-Encoding: base64\r\n\r\n"
                 . chunk_split(base64_encode($text !== '' ? $text : strip_tags($html)))
-                . "--{$boundary}\r\n"
+                . "--{$alternativeBoundary}\r\n"
                 . "Content-Type: text/html; charset=UTF-8\r\n"
                 . "Content-Transfer-Encoding: base64\r\n\r\n"
                 . chunk_split(base64_encode($html))
-                . "--{$boundary}--\r\n";
+                . "--{$alternativeBoundary}--\r\n";
+
+            if ($attachment === null) {
+                $body = $alternativeBody;
+            } else {
+                $filename = preg_replace('/[^A-Za-z0-9_.-]/', '_', $attachment['filename']);
+                $body = "--{$boundary}\r\n"
+                    . "Content-Type: multipart/alternative; boundary=\"{$alternativeBoundary}\"\r\n\r\n"
+                    . $alternativeBody
+                    . "--{$boundary}\r\n"
+                    . "Content-Type: {$attachment['content_type']}; name=\"{$filename}\"\r\n"
+                    . "Content-Disposition: attachment; filename=\"{$filename}\"\r\n"
+                    . "Content-Transfer-Encoding: base64\r\n\r\n"
+                    . chunk_split(base64_encode($attachment['content']))
+                    . "--{$boundary}--\r\n";
+            }
 
             fwrite($sock, implode("\r\n", $headers) . "\r\n\r\n" . $body . "\r\n.\r\n");
             $this->expect($sock, 250);

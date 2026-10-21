@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS `events` (
     `max_capacity` INT UNSIGNED NULL,
     `use_registration_url` TINYINT(1) NOT NULL DEFAULT 0,
     `registration_url`     VARCHAR(500) NULL,
+    `ticket_template_path` VARCHAR(500) NULL,
     `cover_image`      VARCHAR(500) NULL,
     `tag`        VARCHAR(50)  NULL,
     `is_active`  TINYINT(1)   NOT NULL DEFAULT 1,

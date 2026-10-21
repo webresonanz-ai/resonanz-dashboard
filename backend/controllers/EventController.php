@@ -10,7 +10,7 @@ use Core\Response;
 class EventController extends ResourceController
 {
     protected string $table    = 'events';
-    protected array  $fillable = ['title','event_date','event_time','venue','type','event_code','max_capacity','use_registration_url','registration_url','cover_image','tag','is_active'];
+    protected array  $fillable = ['title','event_date','event_time','venue','type','event_code','max_capacity','use_registration_url','registration_url','ticket_template_path','cover_image','tag','is_active'];
 
     private ?array $columnsCache = null;
 
@@ -56,6 +56,16 @@ class EventController extends ResourceController
             if (isset($data['registration_url'])) {
                 $data['registration_url'] = trim((string) $data['registration_url']) ?: null;
             }
+        }
+
+        // Ticket PDF templates are only used for internally registered concerts.
+        if (!$isConcert || $useUrl) {
+            $data['ticket_template_path'] = null;
+        } elseif (array_key_exists('ticket_template_path', $data)) {
+            $path = trim((string) $data['ticket_template_path']);
+            $data['ticket_template_path'] = preg_match('#^/uploads/ticket-templates/[A-Za-z0-9_.-]+\.pdf$#i', $path)
+                ? $path
+                : null;
         }
 
         // Normalize event_code: uppercase alphanumeric, max 20 chars.

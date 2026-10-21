@@ -4,7 +4,8 @@ import { useAuthStore } from '@/stores/authStore'
 import { useToastStore } from '@/stores/toastStore'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { Loader2, RefreshCw, Search, Users } from 'lucide-vue-next'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { Check, Loader2, Mail, Pencil, RefreshCw, Search, Trash2, Users, X } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const toast = useToastStore()
@@ -12,6 +13,13 @@ const audiences = ref([])
 const loading = ref(false)
 const search = ref('')
 const selectedEvent = ref('')
+const editingAudience = ref(null)
+const editForm = ref({ name: '', email: '', phone: '' })
+const saving = ref(false)
+const deletingAudience = ref(null)
+const deleting = ref(false)
+const sendingId = ref(null)
+const sentIds = ref(new Set())
 
 const events = computed(() => {
   const uniqueEvents = new Map()
@@ -50,6 +58,67 @@ async function loadAudiences() {
     toast.error(error.message ?? 'Could not load audiences.')
   } finally {
     loading.value = false
+  }
+}
+
+function openEdit(audience) {
+  editingAudience.value = audience
+  editForm.value = {
+    name: audience.name,
+    email: audience.email,
+    phone: audience.phone,
+  }
+}
+
+function closeEdit() {
+  if (saving.value) return
+  editingAudience.value = null
+}
+
+async function saveAudience() {
+  if (!editingAudience.value || saving.value) return
+  saving.value = true
+  try {
+    const json = await auth.apiFetch(`/api/admin/registrations/${editingAudience.value.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(editForm.value),
+    })
+    Object.assign(editingAudience.value, json.data)
+    toast.success(json.message ?? 'Audience details updated.')
+    editingAudience.value = null
+  } catch (error) {
+    toast.error(error.message ?? 'Could not update audience.')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function deleteAudience() {
+  if (!deletingAudience.value || deleting.value) return
+  deleting.value = true
+  try {
+    await auth.apiFetch(`/api/admin/registrations/${deletingAudience.value.id}`, { method: 'DELETE' })
+    audiences.value = audiences.value.filter(audience => audience.id !== deletingAudience.value.id)
+    toast.success('Audience registration deleted.')
+  } catch (error) {
+    toast.error(error.message ?? 'Could not delete audience registration.')
+  } finally {
+    deleting.value = false
+    deletingAudience.value = null
+  }
+}
+
+async function sendTicket(audience) {
+  if (sendingId.value || !audience.registration_code) return
+  sendingId.value = audience.id
+  try {
+    const json = await auth.apiFetch(`/api/admin/registrations/${audience.id}/send-ticket`, { method: 'POST' })
+    sentIds.value = new Set([...sentIds.value, audience.id])
+    toast.success(json.message ?? `Ticket sent to ${audience.email}.`)
+  } catch (error) {
+    toast.error(error.message ?? 'Could not send ticket email.')
+  } finally {
+    sendingId.value = null
   }
 }
 
@@ -122,6 +191,7 @@ onMounted(loadAudiences)
               <th>Registration Code</th>
               <th>Check-in</th>
               <th>Registered</th>
+              <th class="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -139,10 +209,89 @@ onMounted(loadAudiences)
                 <span v-else class="badge badge-gray">Not checked in</span>
               </td>
               <td class="text-xs text-gray-500">{{ formatDate(audience.created_at) }}</td>
+              <td class="text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <button
+                    class="btn-icon"
+                    :disabled="sendingId !== null || !audience.registration_code"
+                    :title="sentIds.has(audience.id) ? 'Ticket sent — send again' : 'Send ticket email'"
+                    :aria-label="`Send ticket to ${audience.name}`"
+                    @click="sendTicket(audience)"
+                  >
+                    <Loader2 v-if="sendingId === audience.id" class="w-4 h-4 animate-spin" />
+                    <Check v-else-if="sentIds.has(audience.id)" class="w-4 h-4 text-green-400" />
+                    <Mail v-else class="w-4 h-4" />
+                  </button>
+                  <button
+                    class="btn-icon"
+                    :aria-label="`Edit ${audience.name}`"
+                    title="Edit audience"
+                    @click="openEdit(audience)"
+                  >
+                    <Pencil class="w-4 h-4" />
+                  </button>
+                  <button
+                    class="btn-icon hover:text-red-400"
+                    :aria-label="`Delete ${audience.name}`"
+                    title="Delete audience"
+                    @click="deletingAudience = audience"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
+
+    <transition name="fade">
+      <div v-if="editingAudience" class="modal-overlay" @click.self="closeEdit">
+        <div class="modal-box max-w-lg">
+          <div class="modal-header">
+            <div>
+              <h2 class="text-lg font-semibold text-white">Edit Audience</h2>
+              <p class="text-xs text-gray-500 mt-1">{{ editingAudience.event_title }}</p>
+            </div>
+            <button class="btn-icon" :disabled="saving" aria-label="Close edit dialog" @click="closeEdit">
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+          <form @submit.prevent="saveAudience">
+            <div class="modal-body">
+              <div>
+                <label for="audience-name" class="form-label">Name</label>
+                <input id="audience-name" v-model.trim="editForm.name" class="form-input" required minlength="2" maxlength="100" />
+              </div>
+              <div>
+                <label for="audience-email" class="form-label">Email</label>
+                <input id="audience-email" v-model.trim="editForm.email" type="email" class="form-input" required maxlength="255" />
+              </div>
+              <div>
+                <label for="audience-phone" class="form-label">Phone</label>
+                <input id="audience-phone" v-model.trim="editForm.phone" type="tel" class="form-input" required minlength="5" maxlength="30" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn-secondary" :disabled="saving" @click="closeEdit">Cancel</button>
+              <button type="submit" class="btn-primary" :disabled="saving">
+                <Loader2 v-if="saving" class="w-4 h-4 animate-spin" />
+                <Check v-else class="w-4 h-4" />
+                Save changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+    <ConfirmDialog
+      :open="!!deletingAudience"
+      title="Delete Audience"
+      :message="deletingAudience ? `Delete ${deletingAudience.name}'s registration for ${deletingAudience.event_title}? This cannot be undone.` : ''"
+      :loading="deleting"
+      @confirm="deleteAudience"
+      @cancel="!deleting && (deletingAudience = null)"
+    />
   </div>
 </template>

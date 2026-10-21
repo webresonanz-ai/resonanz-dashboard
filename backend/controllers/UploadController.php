@@ -15,14 +15,17 @@ use Core\Response;
  *           → { url: "/uploads/events/xxx.jpg" }
  *   Fonts:  field "font", "folder" = fonts  (.ttf/.otf/.woff/.woff2, max 10 MB)
  *           → { url: "/uploads/fonts/font_xxx.ttf" }
+ *   Ticket templates: field "pdf", "folder" = "ticket-templates" (PDF, max 10 MB)
+ *                     → { url: "/uploads/ticket-templates/ticket_xxx.pdf" }
  */
 class UploadController
 {
     private const MAX_IMAGE_BYTES = 5 * 1024 * 1024;  // 5 MB
     private const MAX_FONT_BYTES  = 10 * 1024 * 1024; // 10 MB
+    private const MAX_PDF_BYTES   = 10 * 1024 * 1024; // 10 MB
     private const ALLOWED_IMG_EXT = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
     private const ALLOWED_FONT_EXT = ['ttf', 'otf', 'woff', 'woff2'];
-    private const ALLOWED_FOLDERS = ['events' => 'event_', 'home' => 'home_', 'facilities' => 'facility_', 'teachers' => 'teacher_', 'fonts' => 'font_'];
+    private const ALLOWED_FOLDERS = ['events' => 'event_', 'home' => 'home_', 'facilities' => 'facility_', 'teachers' => 'teacher_', 'fonts' => 'font_', 'ticket-templates' => 'ticket_'];
 
     /** Magic-byte signatures per font extension */
     private const FONT_MAGIC = [
@@ -39,12 +42,16 @@ class UploadController
         // Target subfolder first (fonts = font files, anything else = images)
         $folder = strtolower(trim((string) ($req->input('folder') ?? 'events')));
         if (!array_key_exists($folder, self::ALLOWED_FOLDERS)) {
-            $res->error('Invalid folder. Allowed: events, home, facilities, teachers, fonts.', 422);
+            $res->error('Invalid upload folder. Allowed: events, home, facilities, teachers, fonts, ticket-templates.', 422);
             return;
         }
 
         if ($folder === 'fonts') {
             $this->storeFont($req, $res);
+            return;
+        }
+        if ($folder === 'ticket-templates') {
+            $this->storeTicketTemplate($req, $res);
             return;
         }
 
@@ -177,6 +184,63 @@ class UploadController
         }
 
         $res->success(['url' => '/uploads/fonts/' . $name], 'Font uploaded successfully.', 201);
+    }
+
+    private function storeTicketTemplate(Request $req, Response $res): void
+    {
+        $file = $req->file('pdf');
+        if (!$file) {
+            $res->error('No PDF file provided. Send multipart/form-data with field "pdf".', 422);
+            return;
+        }
+
+        $err = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+        if ($err !== UPLOAD_ERR_OK) {
+            $res->error($this->uploadErrorMessage($err), 422);
+            return;
+        }
+        if (($file['size'] ?? 0) > self::MAX_PDF_BYTES) {
+            $res->error('Ticket template too large. Max 10 MB.', 422);
+            return;
+        }
+        if (strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION)) !== 'pdf') {
+            $res->error('Invalid file type. Upload a PDF ticket template.', 422);
+            return;
+        }
+
+        $tmp = (string) ($file['tmp_name'] ?? '');
+        if ($tmp === '' || !is_uploaded_file($tmp)) {
+            $res->error('Invalid upload.', 422);
+            return;
+        }
+        $handle = fopen($tmp, 'rb');
+        $signature = $handle === false ? false : fread($handle, 5);
+        if (is_resource($handle)) {
+            fclose($handle);
+        }
+        if ($signature !== '%PDF-') {
+            $res->error('Uploaded file is not a valid PDF.', 422);
+            return;
+        }
+
+        $dir = __DIR__ . '/../public/uploads/ticket-templates';
+        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+            $res->error('Could not create ticket template directory.', 500);
+            return;
+        }
+
+        try {
+            $name = 'ticket_' . date('Ymd_His') . '_' . bin2hex(random_bytes(6)) . '.pdf';
+        } catch (\Throwable) {
+            $name = 'ticket_' . date('Ymd_His') . '_' . uniqid() . '.pdf';
+        }
+
+        if (!move_uploaded_file($tmp, $dir . '/' . $name)) {
+            $res->error('Could not save ticket template.', 500);
+            return;
+        }
+
+        $res->success(['url' => '/uploads/ticket-templates/' . $name], 'Ticket template uploaded.', 201);
     }
 
     /**

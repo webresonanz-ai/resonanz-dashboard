@@ -298,6 +298,73 @@ class EventRegistrationController
         ], $message);
     }
 
+    // ─── ADMIN: update audience contact details ─────────────────────
+    public function adminUpdate(Request $req, Response $res, array $params): void
+    {
+        $id = (int) ($params['id'] ?? 0);
+        $registration = $this->findRegistration($id);
+        if (!$registration) {
+            $res->error('Registration not found.', 404);
+            return;
+        }
+        $event = $this->findEvent((int) $registration['event_id'], false);
+        if (!$event || ($event['type'] ?? '') !== 'Concert' || (int) ($event['use_registration_url'] ?? 0) === 1) {
+            $res->error('This registration is not an internal concert audience.', 422);
+            return;
+        }
+
+        $name = trim((string) $req->input('name', ''));
+        $email = strtolower(trim((string) $req->input('email', '')));
+        $phone = trim((string) $req->input('phone', ''));
+
+        if (mb_strlen($name) < 2 || mb_strlen($name) > 100) {
+            $res->error('Name must be between 2 and 100 characters.', 422);
+            return;
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 255) {
+            $res->error('Enter a valid email address (maximum 255 characters).', 422);
+            return;
+        }
+        if (mb_strlen($phone) < 5 || mb_strlen($phone) > 30) {
+            $res->error('Phone must be between 5 and 30 characters.', 422);
+            return;
+        }
+
+        $duplicate = $this->db->prepare(
+            'SELECT id FROM `event_registrations`
+             WHERE event_id = :event_id AND email = :email AND id <> :id
+             LIMIT 1'
+        );
+        $duplicate->execute([
+            'event_id' => $registration['event_id'],
+            'email' => $email,
+            'id' => $id,
+        ]);
+        if ($duplicate->fetch()) {
+            $res->error('This email is already registered for the concert.', 409);
+            return;
+        }
+
+        $update = $this->db->prepare(
+            'UPDATE `event_registrations`
+             SET `name` = :name, email = :email, phone = :phone
+             WHERE id = :id'
+        );
+        $update->execute([
+            'name' => $name,
+            'email' => $email,
+            'phone' => $phone,
+            'id' => $id,
+        ]);
+
+        $res->success([
+            'id' => $id,
+            'name' => $name,
+            'email' => $email,
+            'phone' => $phone,
+        ], 'Audience details updated.');
+    }
+
     // ─── ADMIN: delete a registration ──────────────────────────────
     public function adminDestroy(Request $req, Response $res, array $params): void
     {
@@ -343,6 +410,7 @@ class EventRegistrationController
                 'event_time' => (string) ($event['event_time'] ?? ''),
                 'venue' => (string) ($event['venue'] ?? ''),
                 'event_code' => (string) ($event['event_code'] ?? ''),
+                'ticket_template_path' => $event['ticket_template_path'] ?? null,
             ],
             (string) $reg['registration_code']
         );
