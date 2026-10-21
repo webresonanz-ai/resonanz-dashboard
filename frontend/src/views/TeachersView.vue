@@ -1,6 +1,6 @@
 <script setup>
-import { computed, onMounted } from 'vue'
-import { Mail, AlertCircle, RefreshCw } from 'lucide-vue-next'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { Mail, AlertCircle, RefreshCw, X } from 'lucide-vue-next'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import { useApi } from '@/composables/useApi'
 
@@ -19,6 +19,25 @@ function resolvePhoto(t) {
   if (!s) return ''
   return /^https?:\/\//i.test(s) ? s : `${API_BASE}${s.startsWith('/') ? s : `/${s}`}`
 }
+
+// ─── Detail modal ───
+const selected = ref(null)
+function openDetail(t) {
+  selected.value = t
+  document.body.style.overflow = 'hidden'
+}
+function closeDetail() {
+  selected.value = null
+  document.body.style.overflow = ''
+}
+function onKey(e) {
+  if (e.key === 'Escape') closeDetail()
+}
+onMounted(() => document.addEventListener('keydown', onKey))
+onUnmounted(() => {
+  document.removeEventListener('keydown', onKey)
+  document.body.style.overflow = ''
+})
 </script>
 
 <template>
@@ -74,7 +93,12 @@ function resolvePhoto(t) {
       <div
         v-for="(t, i) in teachers"
         :key="t.id"
-        class="reveal glass-card p-6 text-center card-lift animated-border group cursor-default"
+        role="button"
+        tabindex="0"
+        @click="openDetail(t)"
+        @keydown.enter="openDetail(t)"
+        @keydown.space.prevent="openDetail(t)"
+        class="reveal glass-card p-6 text-center card-lift animated-border group cursor-pointer"
         :class="`delay-${(i % 4) * 100 + 100}`"
       >
         <!-- Avatar with animated ring -->
@@ -96,29 +120,67 @@ function resolvePhoto(t) {
         <h3 class="text-lg font-serif font-bold text-white mb-1 group-hover:text-gold-300 transition-colors">
           {{ t.name }}
         </h3>
-        <p class="text-xs text-gold-400 font-medium mb-4 tracking-wide">{{ t.role }}</p>
-        <p class="text-sm text-gray-400 leading-relaxed mb-5">{{ t.bio }}</p>
+        <p class="text-xs text-gold-400 font-medium mb-3 tracking-wide">{{ t.role }}</p>
+        <p class="text-sm text-gray-400 leading-relaxed mb-4 line-clamp-2">{{ t.bio }}</p>
+        <span class="inline-flex items-center gap-1 text-xs font-medium text-gold-400/80 group-hover:text-gold-300 transition-colors">
+          {{ $t('common.readMore') }} →
+        </span>
 
-        <!-- Contact link — mailto if email available, else router link -->
-        <a v-if="t.email"
-           :href="`mailto:${t.email}`"
-           class="inline-flex items-center gap-2 text-sm text-gold-400 font-medium
-                  hover:text-gold-300 group/btn transition-all">
-          <Mail class="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-          <span class="group-hover/btn:translate-x-0.5 transition-transform">{{ $t('common.contact') }}</span>
-        </a>
-        <button v-else
-                class="inline-flex items-center gap-2 text-sm text-gold-400 font-medium
-                       hover:text-gold-300 group/btn transition-all">
-          <Mail class="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-          <span class="group-hover/btn:translate-x-0.5 transition-transform">{{ $t('common.contact') }}</span>
-        </button>
+        <!-- Contact link — mailto if email available -->
+        <div class="mt-3" @click.stop>
+          <a v-if="t.email"
+             :href="`mailto:${t.email}`"
+             @click.stop
+             class="inline-flex items-center gap-2 text-sm text-gold-400 font-medium
+                    hover:text-gold-300 group/btn transition-all">
+            <Mail class="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
+            <span class="group-hover/btn:translate-x-0.5 transition-transform">{{ $t('common.contact') }}</span>
+          </a>
+        </div>
       </div>
     </div>
+
+    <!-- ─── Detail modal ─── -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="selected" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="closeDetail"></div>
+          <div role="dialog" aria-modal="true"
+               class="relative glass-card max-w-md w-full p-8 text-center border-gold-500/30 max-h-[90vh] overflow-y-auto">
+            <button @click="closeDetail" aria-label="Close"
+                    class="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center
+                           text-gray-400 hover:text-gold-300 hover:bg-white/5 transition-colors">
+              <X class="w-5 h-5" />
+            </button>
+
+            <div class="relative w-32 h-32 mx-auto mb-5">
+              <div class="absolute inset-0 rounded-full border-2 border-dashed border-gold-500/30"></div>
+              <div class="relative w-full h-full rounded-full overflow-hidden bg-gold-gradient flex items-center justify-center shadow-gold">
+                <img v-if="resolvePhoto(selected)" :src="resolvePhoto(selected)" :alt="selected.name"
+                     class="absolute inset-0 w-full h-full object-cover" />
+                <span v-else class="text-4xl font-serif font-bold text-maroon-950">{{ selected.initials }}</span>
+              </div>
+            </div>
+
+            <h3 class="text-2xl font-serif font-bold text-white mb-1">{{ selected.name }}</h3>
+            <p class="text-sm text-gold-400 font-medium tracking-wide mb-5">{{ selected.role }}</p>
+            <p class="text-sm text-gray-300 leading-relaxed whitespace-pre-line text-left mb-6">{{ selected.bio }}</p>
+
+            <a v-if="selected.email" :href="`mailto:${selected.email}`"
+               class="inline-flex items-center gap-2 px-5 py-2.5 bg-gold-gradient text-maroon-950
+                      font-semibold rounded-xl text-sm btn-magnetic">
+              <Mail class="w-4 h-4" /> {{ selected.email }}
+            </a>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
   </div>
 </template>
 
 <style scoped>
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.25s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>
